@@ -197,3 +197,113 @@ class SessionAttendanceApiTests(APITestCase):
         self.assertEqual(work_log.sign_off_time, final_sign_off)
         self.assertEqual(work_log.total_work_seconds, 9 * 60 * 60 + 30 * 60)
         self.assertEqual(work_log.total_work_hours_display, "09:30")
+
+
+class UserManagementApiTests(APITestCase):
+    def setUp(self):
+        self.password = "testpass123"
+        self.superadmin = User.objects.create_superuser(
+            username="superadmin-api",
+            email="superadmin.api@example.com",
+            password=self.password,
+            employee_id="EMP300",
+        )
+        self.hr_user = User.objects.create_user(
+            username="hr-api",
+            email="hr.api@example.com",
+            password=self.password,
+            employee_id="EMP301",
+            is_hr=True,
+        )
+        self.manager_user = User.objects.create_user(
+            username="manager-api",
+            email="manager.api@example.com",
+            password=self.password,
+            employee_id="EMP302",
+            is_manager=True,
+        )
+        self.employee_user = User.objects.create_user(
+            username="employee-api",
+            email="employee.api@example.com",
+            password=self.password,
+            employee_id="EMP303",
+            first_name="Portal",
+            last_name="Employee",
+        )
+
+    def test_hr_can_fetch_user_management_summary(self):
+        self.client.force_authenticate(user=self.hr_user)
+
+        response = self.client.get(reverse("api-user-management-summary"), {"q": "EMP303"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["filtered_count"], 1)
+        self.assertFalse(response.data["can_assign_roles"])
+        self.assertEqual(response.data["users"][0]["employee_id"], "EMP303")
+
+    def test_manager_cannot_fetch_user_management_summary(self):
+        self.client.force_authenticate(user=self.manager_user)
+
+        response = self.client.get(reverse("api-user-management-summary"))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_hr_cannot_update_roles_via_api(self):
+        self.client.force_authenticate(user=self.hr_user)
+
+        response = self.client.post(
+            reverse("api-user-role-update"),
+            {
+                "user_id": self.employee_user.id,
+                "is_superuser": True,
+                "is_hr": True,
+                "is_manager": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.employee_user.refresh_from_db()
+        self.assertFalse(self.employee_user.is_superuser)
+        self.assertFalse(self.employee_user.is_hr)
+        self.assertFalse(self.employee_user.is_manager)
+
+    def test_superadmin_can_update_roles_via_api(self):
+        self.client.force_authenticate(user=self.superadmin)
+
+        response = self.client.post(
+            reverse("api-user-role-update"),
+            {
+                "user_id": self.employee_user.id,
+                "is_superuser": True,
+                "is_hr": True,
+                "is_manager": True,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.employee_user.refresh_from_db()
+        self.assertTrue(self.employee_user.is_superuser)
+        self.assertTrue(self.employee_user.is_staff)
+        self.assertTrue(self.employee_user.is_hr)
+        self.assertTrue(self.employee_user.is_manager)
+
+    def test_superadmin_cannot_remove_own_superadmin_access_via_api(self):
+        self.client.force_authenticate(user=self.superadmin)
+
+        response = self.client.post(
+            reverse("api-user-role-update"),
+            {
+                "user_id": self.superadmin.id,
+                "is_superuser": False,
+                "is_hr": False,
+                "is_manager": False,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.superadmin.refresh_from_db()
+        self.assertTrue(self.superadmin.is_superuser)
+        self.assertTrue(self.superadmin.is_staff)

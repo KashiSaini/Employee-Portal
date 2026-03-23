@@ -15,6 +15,7 @@ from .views import (
 )
 from .session_views import SessionLoginAPIView, SessionLogoutAPIView, SignOffAPIView
 from .dashboard_views import DashboardSummaryAPIView
+from .user_management_views import UserManagementSummaryAPIView, UserRoleUpdateAPIView
 
 router = DefaultRouter()
 router.register("profile", MyProfileViewSet, basename="api-profile")
@@ -35,6 +36,8 @@ urlpatterns = [
     path("session/logout/", SessionLogoutAPIView.as_view(), name="api-session-logout"),
     path("session/sign-off/", SignOffAPIView.as_view(), name="api-session-sign-off"),
     path("dashboard/summary/", DashboardSummaryAPIView.as_view(), name="api-dashboard-summary"),
+    path("users/management/", UserManagementSummaryAPIView.as_view(), name="api-user-management-summary"),
+    path("users/roles/update/", UserRoleUpdateAPIView.as_view(), name="api-user-role-update"),
 
     path("", include(router.urls)),
 ]

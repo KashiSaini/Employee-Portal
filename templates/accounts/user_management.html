@@ -1,9 +1,15 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}User Management{% endblock %}
 {% block page_heading %}User Management{% endblock %}
 
 {% block content %}
+<div
+    data-user-management-page
+    data-api-url="{% url 'api-user-management-summary' %}"
+    data-role-api-url="{% url 'api-user-role-update' %}"
+>
 <div class="profile-page-head">
     <div>
         <h3>User Management</h3>
@@ -18,21 +24,26 @@
     </div>
 </div>
 
+<div data-users-message class="api-message" style="display:none;"></div>
+
 <div class="section-card">
-    <form method="get" class="search-inline-form">
+    <form method="get" class="search-inline-form" data-user-search-form>
         <input
             type="text"
             name="q"
             value="{{ search_query }}"
             placeholder="Search by employee ID, name, username, or email"
+            data-user-search-input
         >
         <button type="submit" class="btn-primary">Search</button>
         {% if search_query %}
-            <a href="{% url 'manage_users' %}" class="btn-secondary">Clear</a>
+            <a href="{% url 'manage_users' %}" class="btn-secondary" data-user-clear-link>Clear</a>
+        {% else %}
+            <a href="{% url 'manage_users' %}" class="btn-secondary" data-user-clear-link style="display:none;">Clear</a>
         {% endif %}
     </form>
 
-    <p class="search-helper-text">
+    <p class="search-helper-text" data-user-counts>
         Showing {{ filtered_count }} of {{ total_users }} user{{ total_users|pluralize }}.
     </p>
 </div>
@@ -40,7 +51,7 @@
 <div class="section-card mt-20">
     <div class="section-card-header">
         <h3>Portal Users</h3>
-        <p>
+        <p data-user-roles-note>
             {% if can_assign_roles %}
                 Update HR, manager, or superadmin access for existing users.
             {% else %}
@@ -55,10 +66,10 @@
                 <tr>
                     <th>User</th>
                     <th>Current Roles</th>
-                    <th>{% if can_assign_roles %}Portal Access Roles{% else %}Portal Access Roles (View Only){% endif %}</th>
+                    <th data-user-roles-column>{% if can_assign_roles %}Portal Access Roles{% else %}Portal Access Roles (View Only){% endif %}</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody data-user-table-body>
                 {% for portal_user in users %}
                     <tr>
                         <td class="user-cell">
@@ -87,7 +98,7 @@
                         </td>
                         <td>
                             {% if can_assign_roles %}
-                                <form method="post" class="role-form">
+                                <form method="post" class="role-form" data-user-role-form data-user-id="{{ portal_user.id }}">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="update_roles">
                                     <input type="hidden" name="user_id" value="{{ portal_user.id }}">
@@ -123,5 +134,8 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<script src="{% static 'js/user_management_api.js' %}"></script>
 </div>
 {% endblock %}

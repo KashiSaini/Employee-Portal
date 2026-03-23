@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from accounts.models import User
 from profiles.models import EmployeeProfile
 from leave_management.models import LeaveRequest, ShortLeaveRequest
 from timesheet.models import TimeSheetEntry
@@ -77,6 +78,83 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class PortalUserListSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "employee_id",
+            "username",
+            "full_name",
+            "email",
+            "is_superuser",
+            "is_hr",
+            "is_manager",
+            "roles",
+        ]
+
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+    def get_roles(self, obj):
+        roles = []
+
+        if obj.is_superuser:
+            roles.append("Superadmin")
+        if obj.is_hr:
+            roles.append("HR")
+        if obj.is_manager:
+            roles.append("Manager")
+        if not roles:
+            roles.append("Employee")
+
+        return roles
+
+
+class PortalUserRoleUpdateSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    is_superuser = serializers.BooleanField(required=False, default=False)
+    is_hr = serializers.BooleanField(required=False, default=False)
+    is_manager = serializers.BooleanField(required=False, default=False)
+
+    def validate_user_id(self, value):
+        try:
+            return User.objects.get(pk=value)
+        except User.DoesNotExist as exc:
+            raise serializers.ValidationError("User not found.") from exc
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        target_user = attrs["user_id"]
+        make_superadmin = attrs.get("is_superuser", False)
+
+        if target_user == request.user and not make_superadmin:
+            raise serializers.ValidationError(
+                {"detail": "You cannot remove your own superadmin access from this page."}
+            )
+
+        return attrs
+
+    def save(self, **kwargs):
+        target_user = self.validated_data["user_id"]
+        make_superadmin = self.validated_data.get("is_superuser", False)
+        was_superadmin = target_user.is_superuser
+
+        target_user.is_superuser = make_superadmin
+        if make_superadmin:
+            target_user.is_staff = True
+        elif was_superadmin and target_user.is_staff:
+            target_user.is_staff = False
+
+        target_user.is_hr = self.validated_data.get("is_hr", False)
+        target_user.is_manager = self.validated_data.get("is_manager", False)
+        target_user.save(update_fields=["is_superuser", "is_staff", "is_hr", "is_manager"])
+        return target_user
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):

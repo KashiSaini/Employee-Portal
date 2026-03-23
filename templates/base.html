@@ -59,9 +59,9 @@
                     Work From Home
                 </a>
 
-                <a href="{% url 'apply_short_leave' %}" class="{% if request.resolver_match.url_name == 'apply_short_leave' %}active{% endif %}">
+                {% comment %} <a href="{% url 'apply_short_leave' %}" class="{% if request.resolver_match.url_name == 'apply_short_leave' %}active{% endif %}">
                     Short Leave
-                </a>
+                </a> {% endcomment %}
 
                 {% if request.user.is_staff or request.user.is_hr or request.user.is_manager %}
                     <a href="{% url 'approval_dashboard' %}" class="{% if request.resolver_match.url_name == 'approval_dashboard' or request.resolver_match.url_name == 'review_leave' or request.resolver_match.url_name == 'review_short_leave' or request.resolver_match.url_name == 'review_timesheet' or request.resolver_match.url_name == 'review_claim' or request.resolver_match.url_name == 'review_wfh' %}active{% endif %}">
