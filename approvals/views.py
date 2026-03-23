@@ -15,6 +15,10 @@ def employee_label(user):
     return f"{user.get_full_name() or user.username} ({user.employee_id})"
 
 
+def review_action_url(route_name, pk):
+    return reverse(route_name, args=[pk])
+
+
 def handle_review(request, obj, page_title, record_name, summary_fields, approve_url, reject_url):
     if obj.status != "pending":
         messages.error(request, "Only pending records can be reviewed from this page.")
@@ -90,8 +94,8 @@ def review_leave(request, pk):
         page_title="Review Leave Request",
         record_name="Leave request",
         summary_fields=summary_fields,
-        approve_url=reverse("approve_leave", args=[leave.pk]),
-        reject_url=reverse("reject_leave", args=[leave.pk]),
+        approve_url=review_action_url("api-leave-approve", leave.pk),
+        reject_url=review_action_url("api-leave-reject", leave.pk),
     )
 
 
@@ -113,8 +117,8 @@ def review_short_leave(request, pk):
         page_title="Review Short Leave Request",
         record_name="Short leave request",
         summary_fields=summary_fields,
-        approve_url=reverse("approve_short_leave", args=[short_leave.pk]),
-        reject_url=reverse("reject_short_leave", args=[short_leave.pk]),
+        approve_url=review_action_url("api-short-leave-approve", short_leave.pk),
+        reject_url=review_action_url("api-short-leave-reject", short_leave.pk),
     )
 
 
@@ -136,8 +140,8 @@ def review_timesheet(request, pk):
         page_title="Review Time Sheet Entry",
         record_name="Time sheet entry",
         summary_fields=summary_fields,
-        approve_url=reverse("approve_timesheet", args=[entry.pk]),
-        reject_url=reverse("reject_timesheet", args=[entry.pk]),
+        approve_url=review_action_url("api-timesheet-approve", entry.pk),
+        reject_url=review_action_url("api-timesheet-reject", entry.pk),
     )
 
 
@@ -160,8 +164,8 @@ def review_claim(request, pk):
         page_title="Review Claim",
         record_name="Claim",
         summary_fields=summary_fields,
-        approve_url=reverse("approve_claim", args=[claim.pk]),
-        reject_url=reverse("reject_claim", args=[claim.pk]),
+        approve_url=review_action_url("api-claims-approve", claim.pk),
+        reject_url=review_action_url("api-claims-reject", claim.pk),
     )
 
 
@@ -184,6 +188,6 @@ def review_wfh(request, pk):
         page_title="Review Work From Home Request",
         record_name="WFH request",
         summary_fields=summary_fields,
-        approve_url=reverse("approve_wfh", args=[wfh_request.pk]),
-        reject_url=reverse("reject_wfh", args=[wfh_request.pk]),
+        approve_url=review_action_url("api-wfh-approve", wfh_request.pk),
+        reject_url=review_action_url("api-wfh-reject", wfh_request.pk),
     )
