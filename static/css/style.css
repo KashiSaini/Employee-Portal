@@ -497,6 +497,11 @@ body {
     color: #2a2da7;
 }
 
+.btn-small {
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
 .profile-sections {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -894,6 +899,116 @@ body {
     .approval-overview-grid,
     .approval-summary-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* =========================
+   USER MANAGEMENT
+========================= */
+
+.search-inline-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-inline-form input {
+    flex: 1 1 280px;
+    padding: 12px 14px;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: white;
+    outline: none;
+    font-size: 14px;
+}
+
+.search-inline-form input:focus {
+    border-color: #5a57d4;
+}
+
+.search-helper-text {
+    margin-top: 12px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.user-cell {
+    min-width: 260px;
+}
+
+.user-cell strong {
+    display: block;
+    color: #1f2a44;
+    margin-bottom: 4px;
+}
+
+.user-cell p {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.role-pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.role-pill {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.role-pill-admin {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.role-pill-hr {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.role-pill-manager {
+    background: #eef2ff;
+    color: #3730a3;
+}
+
+.role-pill-user {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.role-form {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.role-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.role-toggle input {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 900px) {
+    .role-form {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
 

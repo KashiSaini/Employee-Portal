@@ -21,6 +21,12 @@
                     Dashboard
                 </a>
 
+                {% if request.user.is_superuser %}
+                    <a href="{% url 'manage_users' %}" class="{% if request.resolver_match.url_name == 'manage_users' %}active{% endif %}">
+                        Users
+                    </a>
+                {% endif %}
+
                 <a href="{% url 'leave_list' %}" class="{% if request.resolver_match.url_name == 'leave_list' or request.resolver_match.url_name == 'apply_leave' %}active{% endif %}">
                     Leave
                 </a>

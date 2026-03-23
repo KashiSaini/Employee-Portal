@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}User Management{% endblock %}
+{% block page_heading %}User Management{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>User Management</h3>
+        <p>Search portal users and control who can act as HR or manager from the portal UI.</p>
+    </div>
+    <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+</div>
+
+<div class="section-card">
+    <form method="get" class="search-inline-form">
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search by employee ID, name, username, or email"
+        >
+        <button type="submit" class="btn-primary">Search</button>
+        {% if search_query %}
+            <a href="{% url 'manage_users' %}" class="btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+
+    <p class="search-helper-text">
+        Showing {{ filtered_count }} of {{ total_users }} user{{ total_users|pluralize }}.
+    </p>
+</div>
+
+<div class="section-card mt-20">
+    <div class="section-card-header">
+        <h3>Portal Users</h3>
+    </div>
+
+    <div class="table-wrap">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Current Roles</th>
+                    <th>Portal Access Roles</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for portal_user in users %}
+                    <tr>
+                        <td class="user-cell">
+                            <strong>{{ portal_user.get_full_name|default:portal_user.username }}</strong>
+                            <p>
+                                {{ portal_user.employee_id }}<br>
+                                {{ portal_user.email|default:"No email added" }}<br>
+                                {{ portal_user.username }}
+                            </p>
+                        </td>
+                        <td>
+                            <div class="role-pill-row">
+                                {% if portal_user.is_superuser %}
+                                    <span class="role-pill role-pill-admin">Superadmin</span>
+                                {% endif %}
+                                {% if portal_user.is_hr %}
+                                    <span class="role-pill role-pill-hr">HR</span>
+                                {% endif %}
+                                {% if portal_user.is_manager %}
+                                    <span class="role-pill role-pill-manager">Manager</span>
+                                {% endif %}
+                                {% if not portal_user.is_superuser and not portal_user.is_hr and not portal_user.is_manager %}
+                                    <span class="role-pill role-pill-user">Employee</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <form method="post" class="role-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="user_id" value="{{ portal_user.id }}">
+                                <input type="hidden" name="q" value="{{ search_query }}">
+
+                                <label class="role-toggle">
+                                    <input type="checkbox" name="is_hr" {% if portal_user.is_hr %}checked{% endif %}>
+                                    HR
+                                </label>
+
+                                <label class="role-toggle">
+                                    <input type="checkbox" name="is_manager" {% if portal_user.is_manager %}checked{% endif %}>
+                                    Manager
+                                </label>
+
+                                <button type="submit" class="btn-primary btn-small">Save Roles</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="3" class="empty-cell">No users matched your search.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
