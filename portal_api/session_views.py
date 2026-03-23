@@ -9,6 +9,16 @@ from attendance.models import DailyWorkLog
 User = get_user_model()
 
 
+def format_local_datetime(value, pattern):
+    if not value:
+        return ""
+
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+
+    return value.strftime(pattern)
+
+
 class SessionLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
@@ -99,8 +109,8 @@ class SignOffAPIView(APIView):
         return Response({
             "message": "Sign off updated successfully." if was_already_signed_off else "Signed off successfully.",
             "work_date": str(work_log.work_date),
-            "first_login": work_log.first_login.strftime("%d %b %Y %H:%M"),
-            "sign_off_time": work_log.sign_off_time.strftime("%d %b %Y %H:%M") if work_log.sign_off_time else "",
+            "first_login": format_local_datetime(work_log.first_login, "%d %b %Y %H:%M"),
+            "sign_off_time": format_local_datetime(work_log.sign_off_time, "%d %b %Y %H:%M"),
             "total_work_hours": work_log.total_work_hours_display,
             "work_mode": work_log.get_work_mode_display(),
             "is_signed_off": work_log.is_signed_off,

@@ -16,6 +16,16 @@ def is_reviewer(user):
     return user.is_staff or getattr(user, "is_hr", False) or getattr(user, "is_manager", False)
 
 
+def format_local_datetime(value, pattern):
+    if not value:
+        return ""
+
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+
+    return value.strftime(pattern)
+
+
 class DashboardSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -93,7 +103,7 @@ class DashboardSummaryAPIView(APIView):
             "can_review": can_review,
             "approval_counts": approval_counts,
             "today_work_log": {
-                "first_login": today_work_log.first_login.strftime("%H:%M") if today_work_log else "",
+                "first_login": format_local_datetime(today_work_log.first_login, "%H:%M") if today_work_log else "",
                 "is_signed_off": today_work_log.is_signed_off if today_work_log else False,
                 "total_work_hours": today_work_log.total_work_hours_display if today_work_log else "00:00",
             },

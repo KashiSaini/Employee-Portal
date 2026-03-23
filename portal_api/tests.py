@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 from unittest.mock import patch
 
 from django.urls import reverse
@@ -198,6 +198,32 @@ class SessionAttendanceApiTests(APITestCase):
         self.assertEqual(work_log.total_work_seconds, 9 * 60 * 60 + 30 * 60)
         self.assertEqual(work_log.total_work_hours_display, "09:30")
 
+    def test_sign_off_response_formats_times_in_india_timezone(self):
+        first_login_utc = datetime(2026, 3, 23, 7, 1, tzinfo=dt_timezone.utc)
+        sign_off_utc = datetime(2026, 3, 23, 12, 31, tzinfo=dt_timezone.utc)
+
+        DailyWorkLog.objects.create(
+            user=self.user,
+            work_date=timezone.localdate(first_login_utc),
+            first_login=first_login_utc,
+            work_mode="office",
+        )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["work_mode"] = "office"
+        session.save()
+
+        with patch("portal_api.session_views.timezone.localdate", return_value=timezone.localdate(first_login_utc)), patch(
+            "portal_api.session_views.timezone.now",
+            return_value=sign_off_utc,
+        ):
+            response = self.client.post(reverse("api-session-sign-off"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["first_login"], "23 Mar 2026 12:31")
+        self.assertEqual(response.data["sign_off_time"], "23 Mar 2026 18:01")
+
 
 class UserManagementApiTests(APITestCase):
     def setUp(self):
@@ -307,3 +333,30 @@ class UserManagementApiTests(APITestCase):
         self.superadmin.refresh_from_db()
         self.assertTrue(self.superadmin.is_superuser)
         self.assertTrue(self.superadmin.is_staff)
+
+
+class DashboardSummaryApiTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="dashboard-user",
+            email="dashboard@example.com",
+            password="testpass123",
+            employee_id="EMP400",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_dashboard_summary_formats_first_login_in_india_timezone(self):
+        first_login_utc = datetime(2026, 3, 23, 7, 1, tzinfo=dt_timezone.utc)
+
+        DailyWorkLog.objects.create(
+            user=self.user,
+            work_date=timezone.localdate(first_login_utc),
+            first_login=first_login_utc,
+            work_mode="office",
+        )
+
+        with patch("portal_api.dashboard_views.timezone.localdate", return_value=timezone.localdate(first_login_utc)):
+            response = self.client.get(reverse("api-dashboard-summary"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["today_work_log"]["first_login"], "12:31")
