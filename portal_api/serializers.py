@@ -7,6 +7,14 @@ from wfh.models import WorkFromHomeRequest
 from documents.models import SalarySlip, PolicyDocument, CompanyDocument
 
 
+def value_from_attrs(attrs, instance, field_name):
+    if field_name in attrs:
+        return attrs[field_name]
+    if instance is not None:
+        return getattr(instance, field_name, None)
+    return None
+
+
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
     employee_id = serializers.CharField(source="user.employee_id", read_only=True)
@@ -81,6 +89,15 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("user", "status", "remarks", "reviewed_at", "applied_at", "total_days")
 
+    def validate(self, attrs):
+        start_date = value_from_attrs(attrs, self.instance, "start_date")
+        end_date = value_from_attrs(attrs, self.instance, "end_date")
+
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({"end_date": "End date cannot be earlier than start date."})
+
+        return attrs
+
 
 class ShortLeaveRequestSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -88,6 +105,15 @@ class ShortLeaveRequestSerializer(serializers.ModelSerializer):
         model = ShortLeaveRequest
         fields = "__all__"
         read_only_fields = ("user", "status", "remarks", "reviewed_at", "applied_at")
+
+    def validate(self, attrs):
+        start_time = value_from_attrs(attrs, self.instance, "start_time")
+        end_time = value_from_attrs(attrs, self.instance, "end_time")
+
+        if start_time and end_time and end_time <= start_time:
+            raise serializers.ValidationError({"end_time": "End time must be later than start time."})
+
+        return attrs
 
 
 class TimeSheetEntrySerializer(serializers.ModelSerializer):
@@ -98,6 +124,16 @@ class TimeSheetEntrySerializer(serializers.ModelSerializer):
         model = TimeSheetEntry
         fields = "__all__"
         read_only_fields = ("user", "status", "remarks", "reviewed_at", "created_at", "updated_at", "project_name")
+
+    def validate(self, attrs):
+        hours = value_from_attrs(attrs, self.instance, "hours")
+
+        if hours is not None and hours <= 0:
+            raise serializers.ValidationError({"hours": "Hours must be greater than 0."})
+        if hours is not None and hours > 24:
+            raise serializers.ValidationError({"hours": "Hours cannot be more than 24."})
+
+        return attrs
 
 
 class ClaimSerializer(serializers.ModelSerializer):
@@ -114,6 +150,14 @@ class ClaimSerializer(serializers.ModelSerializer):
     def get_receipt_url(self, obj):
         return obj.receipt.url if obj.receipt else ""
 
+    def validate(self, attrs):
+        amount = value_from_attrs(attrs, self.instance, "amount")
+
+        if amount is not None and amount <= 0:
+            raise serializers.ValidationError({"amount": "Claim amount must be greater than 0."})
+
+        return attrs
+
 
 class WorkFromHomeRequestSerializer(serializers.ModelSerializer):
     total_days = serializers.IntegerField(read_only=True)
@@ -123,6 +167,15 @@ class WorkFromHomeRequestSerializer(serializers.ModelSerializer):
         model = WorkFromHomeRequest
         fields = "__all__"
         read_only_fields = ("user", "status", "remarks", "reviewed_at", "applied_at", "updated_at", "total_days")
+
+    def validate(self, attrs):
+        start_date = value_from_attrs(attrs, self.instance, "start_date")
+        end_date = value_from_attrs(attrs, self.instance, "end_date")
+
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({"end_date": "End date cannot be earlier than start date."})
+
+        return attrs
 
 
 class SalarySlipSerializer(serializers.ModelSerializer):
