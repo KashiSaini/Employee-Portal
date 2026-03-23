@@ -2,6 +2,57 @@
 
 A Django-based employee portal for internal company use. It combines a server-rendered portal, an admin/reviewer workflow, and REST APIs with Swagger.
 
+## Simplified Project Structure
+
+```bash
+employee_portal/
+│
+├── manage.py
+├── README.md
+├── requirements.txt
+│
+├── config/                    # project settings, urls, wsgi/asgi
+│
+├── accounts/                  # authentication
+├── profiles/                  # employee profiles
+├── dashboard/                 # dashboard views
+├── attendance/                # attendance and sign off
+├── leave_management/          # leave requests
+├── wfh/                       # work from home requests
+├── timesheet/                 # timesheet management
+├── claims/                    # claims and receipts
+├── approvals/                 # approval workflows
+├── documents/                 # policies, files, salary slips
+├── portal_api/                # DRF and API logic
+│
+├── templates/                 # HTML templates
+│   ├── accounts/
+│   ├── approvals/
+│   ├── attendance/
+│   ├── claims/
+│   ├── dashboard/
+│   ├── documents/
+│   ├── leave_management/
+│   ├── profiles/
+│   ├── timesheet/
+│   └── wfh/
+│
+├── static/                    # css, js, images
+│   ├── css/
+│   ├── js/
+│   └── images/
+│
+├── media/                     # uploaded files
+│   ├── claims/
+│   │   └── receipts/
+│   ├── company_documents/
+│   ├── policy_documents/
+│   └── salary_slips/
+│
+└── venv/                      # virtual environment
+
+
+
 ## What this project does
 
 Employees can:
