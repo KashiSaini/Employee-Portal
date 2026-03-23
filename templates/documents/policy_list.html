@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Policies{% endblock %}
+{% block page_heading %}Policies{% endblock %}
+
+{% block content %}
+<div data-policy-page data-api-url="{% url 'api-policies-list' %}">
+    <div class="profile-page-head">
+        <div>
+            <h3>Company Policies</h3>
+            <p>Read and download active policy documents.</p>
+        </div>
+    </div>
+
+    <div class="document-grid" id="policy-grid">
+        <div class="section-card">
+            <p class="muted-text">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/documents_api.js' %}"></script>
+{% endblock %}

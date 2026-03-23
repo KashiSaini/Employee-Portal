@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Documents{% endblock %}
+{% block page_heading %}Documents{% endblock %}
+
+{% block content %}
+<div data-company-documents-page data-api-url="{% url 'api-documents-list' %}">
+    <div class="profile-page-head">
+        <div>
+            <h3>Company Documents</h3>
+            <p>Access shared forms, templates, notices, and handbooks.</p>
+        </div>
+    </div>
+
+    <div class="document-grid" id="company-document-grid">
+        <div class="section-card">
+            <p class="muted-text">Loading...</p>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/documents_api.js' %}"></script>
+{% endblock %}

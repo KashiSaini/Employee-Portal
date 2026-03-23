@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Salary Slips{% endblock %}
+{% block page_heading %}Salary Slips{% endblock %}
+
+{% block content %}
+<div data-salary-slip-page data-api-url="{% url 'api-salary-slips-list' %}">
+    <div class="profile-page-head">
+        <div>
+            <h3>My Salary Slips</h3>
+            <p>Download your uploaded monthly salary slips.</p>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Available Salary Slips</h3>
+        </div>
+
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Year</th>
+                        <th>Uploaded On</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+                <tbody id="salary-slip-body">
+                    <tr>
+                        <td colspan="4" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/documents_api.js' %}"></script>
+{% endblock %}

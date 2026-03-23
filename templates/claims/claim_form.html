@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_heading %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>{{ page_title }}</h3>
+        <p>Fill in your expense details and upload the receipt.</p>
+    </div>
+    <a href="{% url 'claim_list' %}" class="btn-secondary">Back to Claims</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+        class="profile-form"
+        data-api-form="true"
+        data-api-url="{% if claim %}{% url 'api-claims-detail' claim.pk %}{% else %}{% url 'api-claims-list' %}{% endif %}"
+        data-api-method="{% if claim %}PATCH{% else %}POST{% endif %}"
+        data-redirect-url="{% url 'claim_list' %}"
+        data-success-message="{% if claim %}Claim updated successfully.{% else %}Claim submitted successfully.{% endif %}"
+    >
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Claim Type</label>
+                {{ form.claim_type }}
+            </div>
+
+            <div class="form-field">
+                <label>Title</label>
+                {{ form.title }}
+            </div>
+
+            <div class="form-field">
+                <label>Amount</label>
+                {{ form.amount }}
+            </div>
+
+            <div class="form-field">
+                <label>Expense Date</label>
+                {{ form.expense_date }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Description</label>
+                {{ form.description }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Receipt Upload</label>
+                {{ form.receipt }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Save Claim</button>
+    </form>
+</div>
+
+<script src="{% static 'js/api_forms.js' %}"></script>
+{% endblock %}

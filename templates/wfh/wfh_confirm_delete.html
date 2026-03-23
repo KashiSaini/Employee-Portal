@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete WFH Request{% endblock %}
+{% block page_heading %}Delete WFH Request{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div data-api-delete-message class="api-message" style="display:none;"></div>
+
+    <div class="delete-box">
+        <h3>Delete Work From Home Request</h3>
+        <p>Are you sure you want to delete this WFH request?</p>
+
+        <div class="delete-entry-info">
+            <p><strong>Start Date:</strong> {{ wfh_request.start_date|date:"d M Y" }}</p>
+            <p><strong>End Date:</strong> {{ wfh_request.end_date|date:"d M Y" }}</p>
+            <p><strong>Total Days:</strong> {{ wfh_request.total_days }}</p>
+            <p><strong>Status:</strong> {{ wfh_request.get_status_display }}</p>
+        </div>
+
+        <form
+            method="post"
+            class="delete-actions"
+            data-api-delete="true"
+            data-api-url="{% url 'api-wfh-detail' wfh_request.pk %}"
+            data-redirect-url="{% url 'wfh_list' %}"
+            data-success-message="WFH request deleted successfully."
+        >
+            {% csrf_token %}
+            <a href="{% url 'wfh_list' %}" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/api_delete.js' %}"></script>
+{% endblock %}

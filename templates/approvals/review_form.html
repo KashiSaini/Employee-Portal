@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_heading %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>{{ page_title }}</h3>
+        <p>Review the details below and approve or reject this record.</p>
+    </div>
+    <a href="{% url 'approval_dashboard' %}" class="btn-secondary">Back to Approval Center</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <div class="section-card-header">
+        <h3>{{ record_name }} details</h3>
+    </div>
+
+    <div class="detail-grid">
+        {% for label, value in summary_fields %}
+        <div class="detail-item">
+            <span>{{ label }}</span>
+            <strong>{{ value }}</strong>
+        </div>
+        {% endfor %}
+    </div>
+
+    <form
+        class="profile-form mt-20"
+        data-review-form
+        data-approve-url="{{ approve_url }}"
+        data-reject-url="{{ reject_url }}"
+        data-redirect-url="{% url 'approval_dashboard' %}"
+    >
+        {% csrf_token %}
+
+        <div class="form-field full-width">
+            <label>Reviewer Remarks</label>
+            {{ form.remarks }}
+        </div>
+
+        <div class="delete-actions">
+            <a href="{% url 'approval_dashboard' %}" class="btn-secondary">Cancel</a>
+            <button type="button" data-review-action="reject" class="btn-danger">Reject</button>
+            <button type="button" data-review-action="approve" class="btn-primary">Approve</button>
+        </div>
+    </form>
+</div>
+
+<script src="{% static 'js/approval_api.js' %}"></script>
+{% endblock %}

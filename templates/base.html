@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Employee Portal{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="portal-layout">
+        <aside class="portal-sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">MyBlueThink</div>
+                <div class="brand-subtitle">Employee Portal</div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard_home' %}" class="{% if request.resolver_match.url_name == 'dashboard_home' %}active{% endif %}">
+                    Dashboard
+                </a>
+
+                <a href="{% url 'leave_list' %}" class="{% if request.resolver_match.url_name == 'leave_list' or request.resolver_match.url_name == 'apply_leave' %}active{% endif %}">
+                    Leave
+                </a>
+
+                <a href="{% url 'timesheet_list' %}" class="{% if request.resolver_match.url_name == 'timesheet_list' or request.resolver_match.url_name == 'timesheet_create' or request.resolver_match.url_name == 'timesheet_update' %}active{% endif %}">
+                    Time Sheet
+                </a>
+
+                <a href="{% url 'claim_list' %}" class="{% if request.resolver_match.url_name == 'claim_list' or request.resolver_match.url_name == 'claim_create' or request.resolver_match.url_name == 'claim_update' %}active{% endif %}">
+                    Claim
+                </a>
+
+                <a href="{% url 'salary_slip_list' %}" class="{% if request.resolver_match.url_name == 'salary_slip_list' %}active{% endif %}">
+                    Salary Slip
+                </a>
+
+                <a href="{% url 'profile_detail' %}" class="{% if request.resolver_match.url_name == 'profile_detail' or request.resolver_match.url_name == 'profile_update' %}active{% endif %}">
+                    My Profile
+                </a>
+
+                <a href="{% url 'policy_list' %}" class="{% if request.resolver_match.url_name == 'policy_list' %}active{% endif %}">
+                    Policy
+                </a>
+
+                <a href="{% url 'company_document_list' %}" class="{% if request.resolver_match.url_name == 'company_document_list' %}active{% endif %}">
+                    Documents
+                </a>
+
+                <a href="{% url 'wfh_list' %}" class="{% if request.resolver_match.url_name == 'wfh_list' or request.resolver_match.url_name == 'wfh_create' or request.resolver_match.url_name == 'wfh_update' %}active{% endif %}">
+                    Work From Home
+                </a>
+
+                <a href="{% url 'apply_short_leave' %}" class="{% if request.resolver_match.url_name == 'apply_short_leave' %}active{% endif %}">
+                    Short Leave
+                </a>
+
+                {% if request.user.is_staff or request.user.is_hr or request.user.is_manager %}
+                    <a href="{% url 'approval_dashboard' %}" class="{% if request.resolver_match.url_name == 'approval_dashboard' or request.resolver_match.url_name == 'review_leave' or request.resolver_match.url_name == 'review_short_leave' or request.resolver_match.url_name == 'review_timesheet' or request.resolver_match.url_name == 'review_claim' or request.resolver_match.url_name == 'review_wfh' %}active{% endif %}">
+                        Approvals
+                    </a>
+                {% endif %}
+
+                <a href="#" data-api-signoff="{% url 'api-session-sign-off' %}">
+                    Sign Off
+                </a>
+
+                <a href="#" data-api-logout="{% url 'api-session-logout' %}">
+                    Log Out
+                </a>
+            </nav>
+        </aside>
+
+        <div class="portal-main">
+            <header class="portal-topbar">
+                <div class="topbar-left">
+                    <h2>{% block page_heading %}Employee Dashboard{% endblock %}</h2>
+                    <p>{% now "d M Y" %}</p>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="user-chip">
+                        <div class="avatar-circle">
+                            {{ request.user.username|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <div class="user-name">
+                                {{ request.user.get_full_name|default:request.user.username }}
+                            </div>
+                            <div class="user-meta">
+                                {{ request.user.employee_id }} • {{ request.session.work_mode|default:"Not Selected" }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {% if messages %}
+                <div class="messages-wrap">
+                    {% for message in messages %}
+                        <div class="message-box">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <main class="portal-content">
+                {% block content %}{% endblock %}
+                <div data-signoff-summary></div>
+            </main>
+
+            <footer class="portal-footer">
+                <p>BlueThink Employee Portal</p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="{% static 'js/session_actions.js' %}"></script>
+</body>
+</html>

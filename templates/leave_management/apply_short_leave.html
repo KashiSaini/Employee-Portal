@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Apply Short Leave{% endblock %}
+{% block page_heading %}Apply Short Leave{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>Apply for Short Leave</h3>
+        <p>Submit a short leave request for approval.</p>
+    </div>
+    <a href="{% url 'leave_list' %}" class="btn-secondary">Back to Leave History</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <form
+        method="post"
+        class="profile-form"
+        data-api-form="true"
+        data-api-url="{% url 'api-short-leave-list' %}"
+        data-api-method="POST"
+        data-redirect-url="{% url 'leave_list' %}"
+        data-success-message="Short leave request submitted successfully."
+    >
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Leave Date</label>
+                {{ form.leave_date }}
+            </div>
+
+            <div class="form-field">
+                <label>Start Time</label>
+                {{ form.start_time }}
+            </div>
+
+            <div class="form-field">
+                <label>End Time</label>
+                {{ form.end_time }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Reason</label>
+                {{ form.reason }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Submit Short Leave</button>
+    </form>
+</div>
+
+<script src="{% static 'js/api_forms.js' %}"></script>
+{% endblock %}

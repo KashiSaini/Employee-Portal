@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile{% endblock %}
+{% block page_heading %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>Update Profile</h3>
+        <p>Edit your employee information and save changes.</p>
+    </div>
+    <a href="{% url 'profile_detail' %}" class="btn-secondary">Back to Profile</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <form
+        method="post"
+        class="profile-form"
+        data-profile-update-form
+        data-api-form="true"
+        data-api-url="{% url 'api-profile-me' %}"
+        data-api-method="PATCH"
+        data-redirect-url="{% url 'profile_detail' %}"
+        data-success-message="Profile updated successfully."
+    >
+        {% csrf_token %}
+
+        <div class="form-section">
+            <h3>Personal Details</h3>
+            <div class="form-grid">
+                <div class="form-field"><label>First Name</label>{{ form.first_name }}</div>
+                <div class="form-field"><label>Last Name</label>{{ form.last_name }}</div>
+                <div class="form-field"><label>Email</label>{{ form.email }}</div>
+                <div class="form-field"><label>Phone</label>{{ form.phone }}</div>
+                <div class="form-field"><label>Department</label>{{ form.department }}</div>
+                <div class="form-field"><label>Designation</label>{{ form.designation }}</div>
+                <div class="form-field"><label>Date of Birth</label>{{ form.date_of_birth }}</div>
+                <div class="form-field"><label>Join Date</label>{{ form.join_date }}</div>
+                <div class="form-field"><label>Gender</label>{{ form.gender }}</div>
+                <div class="form-field"><label>Blood Group</label>{{ form.blood_group }}</div>
+                <div class="form-field"><label>Emergency Contact Name</label>{{ form.emergency_contact_name }}</div>
+                <div class="form-field"><label>Emergency Contact Phone</label>{{ form.emergency_contact_phone }}</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Address Details</h3>
+            <div class="form-grid">
+                <div class="form-field full-width"><label>Permanent Address</label>{{ form.permanent_address }}</div>
+                <div class="form-field full-width"><label>Current Address</label>{{ form.current_address }}</div>
+                <div class="form-field"><label>City</label>{{ form.city }}</div>
+                <div class="form-field"><label>State</label>{{ form.state }}</div>
+                <div class="form-field"><label>Country</label>{{ form.country }}</div>
+                <div class="form-field"><label>Postal Code</label>{{ form.postal_code }}</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Family Details</h3>
+            <div class="form-grid">
+                <div class="form-field"><label>Father Name</label>{{ form.father_name }}</div>
+                <div class="form-field"><label>Mother Name</label>{{ form.mother_name }}</div>
+                <div class="form-field"><label>Spouse Name</label>{{ form.spouse_name }}</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Education Details</h3>
+            <div class="form-grid">
+                <div class="form-field"><label>Highest Qualification</label>{{ form.highest_qualification }}</div>
+                <div class="form-field"><label>Institute Name</label>{{ form.institute_name }}</div>
+                <div class="form-field"><label>Passing Year</label>{{ form.passing_year }}</div>
+                <div class="form-field full-width"><label>Skills</label>{{ form.skills }}</div>
+                <div class="form-field full-width"><label>Bio</label>{{ form.bio }}</div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Save Changes</button>
+    </form>
+</div>
+
+<script>
+    document.body.dataset.profileApiUrl = "{% url 'api-profile-me' %}";
+</script>
+<script src="{% static 'js/profile_api.js' %}"></script>
+<script src="{% static 'js/api_forms.js' %}"></script>
+{% endblock %}

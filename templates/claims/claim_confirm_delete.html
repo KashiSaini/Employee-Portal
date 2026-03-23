@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Claim{% endblock %}
+{% block page_heading %}Delete Claim{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div data-api-delete-message class="api-message" style="display:none;"></div>
+
+    <div class="delete-box">
+        <h3>Delete Claim</h3>
+        <p>Are you sure you want to delete this claim?</p>
+
+        <div class="delete-entry-info">
+            <p><strong>Title:</strong> {{ claim.title }}</p>
+            <p><strong>Type:</strong> {{ claim.get_claim_type_display }}</p>
+            <p><strong>Amount:</strong> ₹{{ claim.amount }}</p>
+            <p><strong>Expense Date:</strong> {{ claim.expense_date|date:"d M Y" }}</p>
+        </div>
+
+        <form
+            method="post"
+            class="delete-actions"
+            data-api-delete="true"
+            data-api-url="{% url 'api-claims-detail' claim.pk %}"
+            data-redirect-url="{% url 'claim_list' %}"
+            data-success-message="Claim deleted successfully."
+        >
+            {% csrf_token %}
+            <a href="{% url 'claim_list' %}" class="btn-secondary">Cancel</a>
+            <button type="submit" class="btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+<script src="{% static 'js/api_delete.js' %}"></script>
+{% endblock %}

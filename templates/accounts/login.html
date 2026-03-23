@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <div class="login-left">
+            <div class="logo-text">MyBlueThink</div>
+
+            <div data-login-message class="login-error" style="display:none;"></div>
+
+            <form
+                method="post"
+                class="login-form"
+                data-login-api-form
+                data-api-url="{% url 'api-session-login' %}"
+            >
+                {% csrf_token %}
+
+                <div class="form-group">
+                    {{ form.employee_id }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.password }}
+                </div>
+
+                <div class="form-group">
+                    {{ form.work_mode }}
+                </div>
+
+                <button type="submit" class="login-btn">Login</button>
+                <a href="#" class="forgot-link">Forgot Password?</a>
+            </form>
+        </div>
+
+        <div class="login-right">
+            <h1>Let's be Together Innovative.</h1>
+        </div>
+    </div>
+
+    <script src="{% static 'js/login_api.js' %}"></script>
+</body>
+</html>

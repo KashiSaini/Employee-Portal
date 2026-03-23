@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Claims{% endblock %}
+{% block page_heading %}Claims{% endblock %}
+
+{% block content %}
+<div
+    data-history-page="claims"
+    data-api-url="{% url 'api-claims-list' %}"
+    data-edit-pattern="{% url 'claim_update' 0 %}"
+    data-delete-pattern="{% url 'claim_delete' 0 %}"
+>
+    <div class="profile-page-head">
+        <div>
+            <h3>My Claims</h3>
+            <p>Track your submitted reimbursement claims.</p>
+        </div>
+        <a href="{% url 'claim_create' %}" class="btn-primary">Submit Claim</a>
+    </div>
+
+    <div class="leave-summary-grid">
+        <div class="summary-card">
+            <span>Total Claims</span>
+            <strong data-total-claims>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>Pending Claims</span>
+            <strong data-pending-claims>0</strong>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Claim History</h3>
+        </div>
+
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Expense Date</th>
+                        <th>Receipt</th>
+                        <th>Status</th>
+                        <th>Submitted On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="claims-table-body">
+                    <tr>
+                        <td colspan="8" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/history_api.js' %}"></script>
+{% endblock %}

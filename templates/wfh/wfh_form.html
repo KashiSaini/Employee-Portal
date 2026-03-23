@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_heading %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>{{ page_title }}</h3>
+        <p>Submit your work from home request for approval.</p>
+    </div>
+    <a href="{% url 'wfh_list' %}" class="btn-secondary">Back to WFH History</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <form
+        method="post"
+        class="profile-form"
+        data-api-form="true"
+        data-api-url="{% if wfh_request %}{% url 'api-wfh-detail' wfh_request.pk %}{% else %}{% url 'api-wfh-list' %}{% endif %}"
+        data-api-method="{% if wfh_request %}PATCH{% else %}POST{% endif %}"
+        data-redirect-url="{% url 'wfh_list' %}"
+        data-success-message="{% if wfh_request %}WFH request updated successfully.{% else %}Work from home request submitted successfully.{% endif %}"
+    >
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Start Date</label>
+                {{ form.start_date }}
+            </div>
+
+            <div class="form-field">
+                <label>End Date</label>
+                {{ form.end_date }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Reason</label>
+                {{ form.reason }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Work Plan</label>
+                {{ form.work_plan }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Save WFH Request</button>
+    </form>
+</div>
+
+<script src="{% static 'js/api_forms.js' %}"></script>
+{% endblock %}

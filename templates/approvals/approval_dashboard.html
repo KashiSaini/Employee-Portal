@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Approval Center{% endblock %}
+{% block page_heading %}Approval Center{% endblock %}
+
+{% block content %}
+<div
+    data-history-page="approval-dashboard"
+    data-leave-api-url="{% url 'api-leave-list' %}?status=pending"
+    data-short-leave-api-url="{% url 'api-short-leave-list' %}?status=pending"
+    data-timesheet-api-url="{% url 'api-timesheet-list' %}?status=pending"
+    data-claim-api-url="{% url 'api-claims-list' %}?status=pending"
+    data-wfh-api-url="{% url 'api-wfh-list' %}?status=pending"
+    data-leave-review-pattern="{% url 'review_leave' 0 %}"
+    data-short-leave-review-pattern="{% url 'review_short_leave' 0 %}"
+    data-timesheet-review-pattern="{% url 'review_timesheet' 0 %}"
+    data-claim-review-pattern="{% url 'review_claim' 0 %}"
+    data-wfh-review-pattern="{% url 'review_wfh' 0 %}"
+>
+    <div class="profile-page-head">
+        <div>
+            <h3>Approval Center</h3>
+            <p>Review pending employee requests across all modules.</p>
+        </div>
+    </div>
+
+    <div class="approval-summary-grid">
+        <div class="summary-card">
+            <span>Total Pending</span>
+            <strong data-approval-total>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>Leave Requests</span>
+            <strong data-approval-leave>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>Short Leave Requests</span>
+            <strong data-approval-short-leave>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>Time Sheet Entries</span>
+            <strong data-approval-timesheet>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>Claims</span>
+            <strong data-approval-claim>0</strong>
+        </div>
+        <div class="summary-card">
+            <span>WFH Requests</span>
+            <strong data-approval-wfh>0</strong>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Pending Leave Requests</h3>
+        </div>
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approval-leave-body">
+                    <tr>
+                        <td colspan="7" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section-card mt-20">
+        <div class="section-card-header">
+            <h3>Pending Short Leave Requests</h3>
+        </div>
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approval-short-leave-body">
+                    <tr>
+                        <td colspan="6" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section-card mt-20">
+        <div class="section-card-header">
+            <h3>Pending Time Sheet Entries</h3>
+        </div>
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Project</th>
+                        <th>Date</th>
+                        <th>Hours</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approval-timesheet-body">
+                    <tr>
+                        <td colspan="6" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section-card mt-20">
+        <div class="section-card-header">
+            <h3>Pending Claims</h3>
+        </div>
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approval-claim-body">
+                    <tr>
+                        <td colspan="6" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section-card mt-20">
+        <div class="section-card-header">
+            <h3>Pending WFH Requests</h3>
+        </div>
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Days</th>
+                        <th>Reason</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approval-wfh-body">
+                    <tr>
+                        <td colspan="6" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/history_api.js' %}"></script>
+{% endblock %}

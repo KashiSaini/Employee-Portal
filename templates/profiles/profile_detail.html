@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+{% block page_heading %}My Profile{% endblock %}
+
+{% block content %}
+<div data-profile-detail></div>
+
+<div class="profile-page-head">
+    <div>
+        <h3>Employee Information</h3>
+        <p>View your personal, address, family, and education details.</p>
+    </div>
+    <a href="{% url 'profile_update' %}" class="btn-primary">Edit Profile</a>
+</div>
+
+<div class="profile-sections">
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Personal Details</h3>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item"><span>Full Name</span><strong data-profile-field="full_name">-</strong></div>
+            <div class="detail-item"><span>Employee ID</span><strong data-profile-field="employee_id">-</strong></div>
+            <div class="detail-item"><span>Email</span><strong data-profile-field="email">-</strong></div>
+            <div class="detail-item"><span>Phone</span><strong data-profile-field="phone">-</strong></div>
+            <div class="detail-item"><span>Department</span><strong data-profile-field="department">-</strong></div>
+            <div class="detail-item"><span>Designation</span><strong data-profile-field="designation">-</strong></div>
+            <div class="detail-item"><span>Date of Birth</span><strong data-profile-field="date_of_birth">-</strong></div>
+            <div class="detail-item"><span>Join Date</span><strong data-profile-field="join_date">-</strong></div>
+            <div class="detail-item"><span>Gender</span><strong data-profile-field="gender">-</strong></div>
+            <div class="detail-item"><span>Blood Group</span><strong data-profile-field="blood_group">-</strong></div>
+            <div class="detail-item"><span>Emergency Contact Name</span><strong data-profile-field="emergency_contact_name">-</strong></div>
+            <div class="detail-item"><span>Emergency Contact Phone</span><strong data-profile-field="emergency_contact_phone">-</strong></div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Address Details</h3>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item full-width"><span>Permanent Address</span><strong data-profile-field="permanent_address">-</strong></div>
+            <div class="detail-item full-width"><span>Current Address</span><strong data-profile-field="current_address">-</strong></div>
+            <div class="detail-item"><span>City</span><strong data-profile-field="city">-</strong></div>
+            <div class="detail-item"><span>State</span><strong data-profile-field="state">-</strong></div>
+            <div class="detail-item"><span>Country</span><strong data-profile-field="country">-</strong></div>
+            <div class="detail-item"><span>Postal Code</span><strong data-profile-field="postal_code">-</strong></div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Family Details</h3>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item"><span>Father Name</span><strong data-profile-field="father_name">-</strong></div>
+            <div class="detail-item"><span>Mother Name</span><strong data-profile-field="mother_name">-</strong></div>
+            <div class="detail-item"><span>Spouse Name</span><strong data-profile-field="spouse_name">-</strong></div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="section-card-header">
+            <h3>Education Details</h3>
+        </div>
+
+        <div class="detail-grid">
+            <div class="detail-item"><span>Highest Qualification</span><strong data-profile-field="highest_qualification">-</strong></div>
+            <div class="detail-item"><span>Institute Name</span><strong data-profile-field="institute_name">-</strong></div>
+            <div class="detail-item"><span>Passing Year</span><strong data-profile-field="passing_year">-</strong></div>
+            <div class="detail-item full-width"><span>Skills</span><strong data-profile-field="skills">-</strong></div>
+            <div class="detail-item full-width"><span>Bio</span><strong data-profile-field="bio">-</strong></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.body.dataset.profileApiUrl = "{% url 'api-profile-me' %}";
+</script>
+<script src="{% static 'js/profile_api.js' %}"></script>
+{% endblock %}

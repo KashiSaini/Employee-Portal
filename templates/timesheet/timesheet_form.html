@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+{% block page_heading %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>{{ page_title }}</h3>
+        <p>Fill in your work details and submit the entry.</p>
+    </div>
+    <a href="{% url 'timesheet_list' %}" class="btn-secondary">Back to Time Sheet</a>
+</div>
+
+<div class="form-card">
+    <div data-api-message class="api-message" style="display:none;"></div>
+
+    <form
+        method="post"
+        class="profile-form"
+        data-api-form="true"
+        data-api-url="{% if entry %}{% url 'api-timesheet-detail' entry.pk %}{% else %}{% url 'api-timesheet-list' %}{% endif %}"
+        data-api-method="{% if entry %}PATCH{% else %}POST{% endif %}"
+        data-redirect-url="{% url 'timesheet_list' %}"
+        data-success-message="{% if entry %}Time sheet entry updated successfully.{% else %}Time sheet entry submitted successfully.{% endif %}"
+    >
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label>Project</label>
+                {{ form.project }}
+            </div>
+
+            <div class="form-field">
+                <label>Work Date</label>
+                {{ form.work_date }}
+            </div>
+
+            <div class="form-field">
+                <label>Hours</label>
+                {{ form.hours }}
+            </div>
+
+            <div class="form-field full-width">
+                <label>Description</label>
+                {{ form.description }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Save Entry</button>
+    </form>
+</div>
+
+<script src="{% static 'js/api_forms.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Off Summary{% endblock %}
+{% block page_heading %}Sign Off Summary{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div class="section-card-header">
+        <h3>Today's Work Summary</h3>
+        <p>Your workday has been signed off successfully.</p>
+    </div>
+
+    <div class="detail-grid">
+        <div class="detail-item">
+            <span>Date</span>
+            <strong>{{ work_log.work_date|date:"d M Y" }}</strong>
+        </div>
+
+        <div class="detail-item">
+            <span>First Login</span>
+            <strong>{{ work_log.first_login|date:"d M Y H:i" }}</strong>
+        </div>
+
+        <div class="detail-item">
+            <span>Sign Off Time</span>
+            <strong>{{ work_log.sign_off_time|date:"d M Y H:i" }}</strong>
+        </div>
+
+        <div class="detail-item">
+            <span>Total Worked Hours</span>
+            <strong>{{ work_log.total_work_hours_display }}</strong>
+        </div>
+
+        <div class="detail-item">
+            <span>Work Mode</span>
+            <strong>{{ work_log.get_work_mode_display|default:"Not Selected" }}</strong>
+        </div>
+
+        <div class="detail-item">
+            <span>Status</span>
+            <strong>{% if work_log.is_signed_off %}Signed Off{% else %}Open{% endif %}</strong>
+        </div>
+    </div>
+
+    <div class="delete-actions mt-20">
+        <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+        <a href="{% url 'logout' %}" class="btn-primary">Log Out</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_heading %}Dashboard{% endblock %}
+
+{% block content %}
+<div data-dashboard-page data-api-url="{% url 'api-dashboard-summary' %}">
+    <div class="dashboard-grid-v2">
+        <section class="dashboard-main-v2">
+            <div class="card profile-card-v2">
+                <div class="card-header">
+                    <h3>Employee Profile</h3>
+                </div>
+
+                <div class="profile-top">
+                    <div class="profile-avatar">
+                        {{ request.user.username|slice:":1"|upper }}
+                    </div>
+
+                    <div class="profile-main-info">
+                        <h4 data-dashboard-name>-</h4>
+                        <p data-dashboard-designation>-</p>
+                        <span class="badge-soft" data-dashboard-department>-</span>
+                    </div>
+                </div>
+
+                <div class="profile-grid">
+                    <div class="info-row">
+                        <span>Employee ID</span>
+                        <strong data-dashboard-employee-id>-</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Email</span>
+                        <strong data-dashboard-email>-</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Phone</span>
+                        <strong data-dashboard-phone>-</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Join Date</span>
+                        <strong data-dashboard-join-date>-</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Date of Birth</span>
+                        <strong data-dashboard-dob>-</strong>
+                    </div>
+
+                    <div class="info-row">
+                        <span>Work Mode</span>
+                        <strong data-dashboard-work-mode>-</strong>
+                    </div>
+                </div>
+
+                <div class="completion-wrap">
+                    <div class="completion-head">
+                        <span>Profile Completion</span>
+                        <strong data-dashboard-profile-completion>0%</strong>
+                    </div>
+                    <div class="completion-bar">
+                        <div class="completion-fill" data-dashboard-profile-fill style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-stats-grid">
+                <div class="quick-stat-card">
+                    <span>Pending Items</span>
+                    <strong data-dashboard-pending-total>0</strong>
+                </div>
+
+                <div class="quick-stat-card">
+                    <span>Leave Requests</span>
+                    <strong data-dashboard-leave-total>0</strong>
+                </div>
+
+                <div class="quick-stat-card">
+                    <span>Short Leaves</span>
+                    <strong data-dashboard-short-leave-total>0</strong>
+                </div>
+
+                <div class="quick-stat-card">
+                    <span>Time Sheets</span>
+                    <strong data-dashboard-timesheet-total>0</strong>
+                </div>
+
+                <div class="quick-stat-card">
+                    <span>Claims</span>
+                    <strong data-dashboard-claim-total>0</strong>
+                </div>
+
+                <div class="quick-stat-card">
+                    <span>WFH Requests</span>
+                    <strong data-dashboard-wfh-total>0</strong>
+                </div>
+            </div>
+
+            <div class="card alert-card">
+                <div class="card-header">
+                    <h3>Alerts</h3>
+                </div>
+
+                <ul class="alert-list" data-dashboard-alerts>
+                    <li>Loading...</li>
+                </ul>
+            </div>
+
+            <div class="card recent-activity-card">
+                <div class="card-header">
+                    <h3>Recent Activity</h3>
+                </div>
+
+                <div class="activity-list" data-dashboard-activity>
+                    <div class="empty-activity" >Loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <aside class="dashboard-side-v2">
+            <div class="card mini-card">
+                <div class="card-header">
+                    <h3>Today's Work Status</h3>
+                </div>
+
+                <div data-dashboard-work-status>
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div class="card mini-card">
+                <div class="card-header">
+                    <h3>Upcoming Birthdays</h3>
+                </div>
+
+                <div class="mini-list" data-dashboard-birthdays>
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <div class="card mini-card">
+                <div class="card-header">
+                    <h3>Work Anniversaries</h3>
+                </div>
+
+                <div class="mini-list" data-dashboard-anniversaries>
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div class="card approval-overview-card" data-dashboard-approvals style="display:none;">
+        <div class="card-header">
+            <h3>Pending Approvals</h3>
+            <a href="{% url 'approval_dashboard' %}" class="btn-secondary">Open Approval Center</a>
+        </div>
+
+        <div class="approval-overview-grid">
+            <div class="approval-stat">
+                <span>Total Pending</span>
+                <strong data-dashboard-approval-total>0</strong>
+            </div>
+
+            <div class="approval-stat">
+                <span>Leave</span>
+                <strong data-dashboard-approval-leave>0</strong>
+            </div>
+
+            <div class="approval-stat">
+                <span>Short Leave</span>
+                <strong data-dashboard-approval-short-leave>0</strong>
+            </div>
+
+            <div class="approval-stat">
+                <span>Time Sheet</span>
+                <strong data-dashboard-approval-timesheet>0</strong>
+            </div>
+
+            <div class="approval-stat">
+                <span>Claims</span>
+                <strong data-dashboard-approval-claim>0</strong>
+            </div>
+
+            <div class="approval-stat">
+                <span>WFH</span>
+                <strong data-dashboard-approval-wfh>0</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/dashboard_api.js' %}"></script>
+{% endblock %}
