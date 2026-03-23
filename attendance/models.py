@@ -30,6 +30,21 @@ class DailyWorkLog(models.Model):
     def __str__(self):
         return f"{self.user.employee_id} - {self.work_date}"
 
+    def record_sign_off(self, sign_off_at, work_mode=""):
+        self.sign_off_time = sign_off_at
+
+        total_seconds = int((self.sign_off_time - self.first_login).total_seconds())
+        if total_seconds < 0:
+            total_seconds = 0
+
+        self.total_work_seconds = total_seconds
+        self.is_signed_off = True
+
+        if not self.work_mode and work_mode:
+            self.work_mode = work_mode
+
+        self.save()
+
     @property
     def total_work_hours_display(self):
         hours = self.total_work_seconds // 3600

@@ -21,7 +21,7 @@
                     Dashboard
                 </a>
 
-                {% if request.user.is_superuser %}
+                {% if request.user.is_superuser or request.user.is_hr %}
                     <a href="{% url 'manage_users' %}" class="{% if request.resolver_match.url_name == 'manage_users' %}active{% endif %}">
                         Users
                     </a>

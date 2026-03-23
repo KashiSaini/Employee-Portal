@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Create User{% endblock %}
+{% block page_heading %}Create User{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>Create User</h3>
+        <p>
+            {% if can_assign_roles %}
+                Create a new portal user and assign access roles immediately.
+            {% else %}
+                Create a new employee user. Special roles can be assigned later by a superadmin.
+            {% endif %}
+        </p>
+    </div>
+    <div class="page-head-actions">
+        <a href="{% url 'manage_users' %}" class="btn-secondary">Back to Users</a>
+        <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="form-card">
+    {% if create_form.non_field_errors %}
+        <ul class="form-error-list form-error-list-block">
+            {% for error in create_form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" class="profile-form">
+        {% csrf_token %}
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="{{ create_form.employee_id.id_for_label }}">Employee ID</label>
+                {{ create_form.employee_id }}
+                {% if create_form.employee_id.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.employee_id.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.username.id_for_label }}">Username</label>
+                {{ create_form.username }}
+                {% if create_form.username.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.username.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.first_name.id_for_label }}">First Name</label>
+                {{ create_form.first_name }}
+                {% if create_form.first_name.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.first_name.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.last_name.id_for_label }}">Last Name</label>
+                {{ create_form.last_name }}
+                {% if create_form.last_name.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.last_name.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.email.id_for_label }}">Email</label>
+                {{ create_form.email }}
+                {% if create_form.email.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.email.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.phone.id_for_label }}">Phone</label>
+                {{ create_form.phone }}
+                {% if create_form.phone.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.phone.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.department.id_for_label }}">Department</label>
+                {{ create_form.department }}
+                {% if create_form.department.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.department.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.designation.id_for_label }}">Designation</label>
+                {{ create_form.designation }}
+                {% if create_form.designation.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.designation.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.password1.id_for_label }}">Password</label>
+                {{ create_form.password1 }}
+                {% if create_form.password1.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.password1.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.password2.id_for_label }}">Confirm Password</label>
+                {{ create_form.password2 }}
+                {% if create_form.password2.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.password2.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            {% if can_assign_roles %}
+                <div class="form-field full-width">
+                    <label>Portal Roles</label>
+                    <div class="role-form">
+                        <label class="role-toggle">
+                            {{ create_form.is_superuser }}
+                            Superadmin
+                        </label>
+                        <label class="role-toggle">
+                            {{ create_form.is_hr }}
+                            HR
+                        </label>
+                        <label class="role-toggle">
+                            {{ create_form.is_manager }}
+                            Manager
+                        </label>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn-primary">Create User</button>
+    </form>
+</div>
+{% endblock %}

@@ -475,6 +475,12 @@ body {
     font-size: 14px;
 }
 
+.page-head-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .btn-primary,
 .btn-secondary {
     text-decoration: none;
@@ -522,6 +528,12 @@ body {
 .section-card-header h3 {
     font-size: 20px;
     color: #1f2a44;
+}
+
+.section-card-header p {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 14px;
 }
 
 .detail-grid {
@@ -1003,6 +1015,24 @@ body {
 .role-toggle input {
     width: 16px;
     height: 16px;
+}
+
+.read-only-note {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.form-error-list {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    color: #b91c1c;
+    font-size: 13px;
+}
+
+.form-error-list-block {
+    margin-bottom: 18px;
 }
 
 @media (max-width: 900px) {

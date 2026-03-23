@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="detail-grid">
                             <div class="detail-item"><span>Date</span><strong>${data.work_date || "-"}</strong></div>
                             <div class="detail-item"><span>First Login</span><strong>${data.first_login || "-"}</strong></div>
-                            <div class="detail-item"><span>Sign Off Time</span><strong>${data.sign_off_time || "-"}</strong></div>
+                            <div class="detail-item"><span>Latest Sign Off Time</span><strong>${data.sign_off_time || "-"}</strong></div>
                             <div class="detail-item"><span>Total Worked Hours</span><strong>${data.total_work_hours || "00:00"}</strong></div>
                             <div class="detail-item"><span>Work Mode</span><strong>${data.work_mode || "-"}</strong></div>
                             <div class="detail-item"><span>Status</span><strong>${data.is_signed_off ? "Signed Off" : "Open"}</strong></div>

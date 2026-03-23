@@ -7,9 +7,15 @@
 <div class="profile-page-head">
     <div>
         <h3>User Management</h3>
-        <p>Search portal users and control who can act as HR or manager from the portal UI.</p>
+        <p>
+            Superadmin and HR users can search the portal user list here.
+            Only superadmin can change roles, and HR-created users stay as employees.
+        </p>
     </div>
-    <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+    <div class="page-head-actions">
+        <a href="{% url 'create_user' %}" class="btn-primary">Create User</a>
+        <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+    </div>
 </div>
 
 <div class="section-card">
@@ -34,6 +40,13 @@
 <div class="section-card mt-20">
     <div class="section-card-header">
         <h3>Portal Users</h3>
+        <p>
+            {% if can_assign_roles %}
+                Update HR, manager, or superadmin access for existing users.
+            {% else %}
+                View only. Contact a superadmin if someone needs a role change.
+            {% endif %}
+        </p>
     </div>
 
     <div class="table-wrap">
@@ -42,7 +55,7 @@
                 <tr>
                     <th>User</th>
                     <th>Current Roles</th>
-                    <th>Portal Access Roles</th>
+                    <th>{% if can_assign_roles %}Portal Access Roles{% else %}Portal Access Roles (View Only){% endif %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -73,23 +86,33 @@
                             </div>
                         </td>
                         <td>
-                            <form method="post" class="role-form">
-                                {% csrf_token %}
-                                <input type="hidden" name="user_id" value="{{ portal_user.id }}">
-                                <input type="hidden" name="q" value="{{ search_query }}">
+                            {% if can_assign_roles %}
+                                <form method="post" class="role-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_roles">
+                                    <input type="hidden" name="user_id" value="{{ portal_user.id }}">
+                                    <input type="hidden" name="q" value="{{ search_query }}">
 
-                                <label class="role-toggle">
-                                    <input type="checkbox" name="is_hr" {% if portal_user.is_hr %}checked{% endif %}>
-                                    HR
-                                </label>
+                                    <label class="role-toggle">
+                                        <input type="checkbox" name="is_superuser" {% if portal_user.is_superuser %}checked{% endif %}>
+                                        Superadmin
+                                    </label>
 
-                                <label class="role-toggle">
-                                    <input type="checkbox" name="is_manager" {% if portal_user.is_manager %}checked{% endif %}>
-                                    Manager
-                                </label>
+                                    <label class="role-toggle">
+                                        <input type="checkbox" name="is_hr" {% if portal_user.is_hr %}checked{% endif %}>
+                                        HR
+                                    </label>
 
-                                <button type="submit" class="btn-primary btn-small">Save Roles</button>
-                            </form>
+                                    <label class="role-toggle">
+                                        <input type="checkbox" name="is_manager" {% if portal_user.is_manager %}checked{% endif %}>
+                                        Manager
+                                    </label>
+
+                                    <button type="submit" class="btn-primary btn-small">Save Roles</button>
+                                </form>
+                            {% else %}
+                                <p class="read-only-note">View only. Role changes can be made by a superadmin.</p>
+                            {% endif %}
                         </td>
                     </tr>
                 {% empty %}

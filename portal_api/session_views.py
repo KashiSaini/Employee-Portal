@@ -45,7 +45,7 @@ class SessionLoginAPIView(APIView):
         today = timezone.localdate()
         now = timezone.now()
 
-        work_log, created = DailyWorkLog.objects.get_or_create(
+        work_log, _ = DailyWorkLog.objects.get_or_create(
             user=user,
             work_date=today,
             defaults={
@@ -84,7 +84,7 @@ class SignOffAPIView(APIView):
         today = timezone.localdate()
         now = timezone.now()
 
-        work_log, created = DailyWorkLog.objects.get_or_create(
+        work_log, _ = DailyWorkLog.objects.get_or_create(
             user=request.user,
             work_date=today,
             defaults={
@@ -93,22 +93,11 @@ class SignOffAPIView(APIView):
             }
         )
 
-        if not work_log.is_signed_off:
-            work_log.sign_off_time = now
-            total_seconds = int((work_log.sign_off_time - work_log.first_login).total_seconds())
-            if total_seconds < 0:
-                total_seconds = 0
-
-            work_log.total_work_seconds = total_seconds
-            work_log.is_signed_off = True
-
-            if not work_log.work_mode:
-                work_log.work_mode = request.session.get("work_mode", "")
-
-            work_log.save()
+        was_already_signed_off = work_log.is_signed_off
+        work_log.record_sign_off(now, request.session.get("work_mode", ""))
 
         return Response({
-            "message": "Signed off successfully.",
+            "message": "Sign off updated successfully." if was_already_signed_off else "Signed off successfully.",
             "work_date": str(work_log.work_date),
             "first_login": work_log.first_login.strftime("%d %b %Y %H:%M"),
             "sign_off_time": work_log.sign_off_time.strftime("%d %b %Y %H:%M") if work_log.sign_off_time else "",
