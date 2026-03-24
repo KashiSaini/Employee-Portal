@@ -1,0 +1,7 @@
+# ignore all media files
+*.jpg
+*.jpeg
+*.png   
+
+# ignore env files
+.env
