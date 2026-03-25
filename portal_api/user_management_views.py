@@ -3,17 +3,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.access import can_access_user_management, can_assign_user_roles, filter_user_management_queryset
 from accounts.models import User
 
 from .serializers import PortalUserListSerializer, PortalUserRoleUpdateSerializer
-
-
-def can_access_user_management(user):
-    return user.is_superuser or getattr(user, "is_hr", False)
-
-
-def can_assign_user_roles(user):
-    return user.is_superuser
 
 
 class UserManagementSummaryAPIView(APIView):
@@ -22,12 +15,15 @@ class UserManagementSummaryAPIView(APIView):
     def get(self, request):
         if not can_access_user_management(request.user):
             return Response(
-                {"detail": "Only superadmin and HR users can access the user management page."},
+                {
+                    "detail": "Only superadmin, HR, and managers with an assigned team can access the user management page."
+                },
                 status=403,
             )
 
         search_query = request.query_params.get("q", "").strip()
-        users = User.objects.all().order_by("employee_id", "username")
+        scoped_users = filter_user_management_queryset(User.objects.all(), request.user)
+        users = scoped_users.order_by("employee_id", "username")
 
         if search_query:
             users = users.filter(
@@ -41,9 +37,10 @@ class UserManagementSummaryAPIView(APIView):
         return Response(
             {
                 "search_query": search_query,
-                "total_users": User.objects.count(),
+                "total_users": scoped_users.count(),
                 "filtered_count": users.count(),
                 "can_assign_roles": can_assign_user_roles(request.user),
+                "team_choices": [{"value": value, "label": label} for value, label in User.TEAM_CHOICES],
                 "users": PortalUserListSerializer(users, many=True).data,
             }
         )

@@ -21,7 +21,7 @@
                     Dashboard
                 </a>
 
-                {% if request.user.is_superuser or request.user.is_hr %}
+                {% if request.user.is_superuser or request.user.is_hr or request.user.has_team_scope %}
                     <a href="{% url 'manage_users' %}" class="{% if request.resolver_match.url_name == 'manage_users' %}active{% endif %}">
                         Users
                     </a>
@@ -63,7 +63,7 @@
                     Short Leave
                 </a> {% endcomment %}
 
-                {% if request.user.is_staff or request.user.is_hr or request.user.is_manager %}
+                {% if request.user.is_staff or request.user.is_hr or request.user.has_team_scope %}
                     <a href="{% url 'approval_dashboard' %}" class="{% if request.resolver_match.url_name == 'approval_dashboard' or request.resolver_match.url_name == 'review_leave' or request.resolver_match.url_name == 'review_short_leave' or request.resolver_match.url_name == 'review_timesheet' or request.resolver_match.url_name == 'review_claim' or request.resolver_match.url_name == 'review_wfh' %}active{% endif %}">
                         Approvals
                     </a>

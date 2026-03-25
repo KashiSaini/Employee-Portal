@@ -10,6 +10,7 @@ class CustomUserAdmin(UserAdmin):
         "username",
         "employee_id",
         "email",
+        "team",
         "is_staff",
         "is_manager",
         "is_hr",
@@ -23,6 +24,8 @@ class CustomUserAdmin(UserAdmin):
                 "department",
                 "designation",
                 "phone",
+                "team",
+                "is_manager",
                 "is_hr",
             )
         }),
@@ -35,6 +38,8 @@ class CustomUserAdmin(UserAdmin):
                 "department",
                 "designation",
                 "phone",
+                "team",
+                "is_manager",
                 "is_hr",
             )
         }),

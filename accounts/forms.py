@@ -22,6 +22,7 @@ class LoginForm(forms.Form):
 
 
 class PortalUserCreationForm(UserCreationForm):
+    team = forms.ChoiceField(choices=User.TEAM_CHOICES, required=True, label="Team")
     is_superuser = forms.BooleanField(required=False, label="Superadmin")
     is_hr = forms.BooleanField(required=False, label="HR")
     is_manager = forms.BooleanField(required=False, label="Manager")
@@ -37,14 +38,17 @@ class PortalUserCreationForm(UserCreationForm):
             "department",
             "designation",
             "phone",
+            "team",
         )
 
-    def __init__(self, *args, allow_role_assignment=False, **kwargs):
+    def __init__(self, *args, allow_role_assignment=False, actor=None, **kwargs):
         self.allow_role_assignment = allow_role_assignment
+        self.actor = actor
         super().__init__(*args, **kwargs)
 
         self.fields["employee_id"].label = "Employee ID"
         self.fields["email"].required = True
+        self.fields["team"].choices = list(User.TEAM_CHOICES)
 
         placeholders = {
             "employee_id": "Employee ID",
@@ -55,6 +59,7 @@ class PortalUserCreationForm(UserCreationForm):
             "department": "Department",
             "designation": "Designation",
             "phone": "Phone number",
+            "team": "Team",
             "password1": "Password",
             "password2": "Confirm password",
         }
@@ -67,6 +72,26 @@ class PortalUserCreationForm(UserCreationForm):
             self.fields.pop("is_superuser")
             self.fields.pop("is_hr")
             self.fields.pop("is_manager")
+
+        if getattr(self.actor, "has_team_scope", False):
+            self.fields["team"].choices = [(self.actor.team, self.actor.get_team_display())]
+            self.fields["team"].initial = self.actor.team
+
+    def clean_team(self):
+        team = self.cleaned_data.get("team", "")
+
+        if getattr(self.actor, "has_team_scope", False) and team != self.actor.team:
+            raise forms.ValidationError("You can only create users for your own team.")
+
+        return team
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.allow_role_assignment and cleaned_data.get("is_manager") and not cleaned_data.get("team"):
+            self.add_error("team", "Team is required for managers.")
+
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)

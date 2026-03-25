@@ -1,8 +1,10 @@
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+
+from accounts.access import filter_review_queryset, is_reviewer
 from profiles.models import EmployeeProfile
 from leave_management.models import LeaveRequest, ShortLeaveRequest
 from timesheet.models import TimeSheetEntry
@@ -28,9 +30,6 @@ class StatusFilterMixin:
         if status in {"pending", "approved", "rejected"}:
             qs = qs.filter(status=status)
         return qs
-
-def is_reviewer(user):
-    return user.is_staff or getattr(user, "is_hr", False) or getattr(user, "is_manager", False)
 
 
 
@@ -112,8 +111,7 @@ class LeaveRequestViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, Reviewabl
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = LeaveRequest.objects.all().select_related("user")
-        qs = qs if is_reviewer(self.request.user) else qs.filter(user=self.request.user)
+        qs = filter_review_queryset(LeaveRequest.objects.all().select_related("user"), self.request.user)
         return self.filter_status(qs)
 
     def perform_create(self, serializer):
@@ -125,8 +123,7 @@ class ShortLeaveRequestViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, Revi
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = ShortLeaveRequest.objects.all().select_related("user")
-        qs = qs if is_reviewer(self.request.user) else qs.filter(user=self.request.user)
+        qs = filter_review_queryset(ShortLeaveRequest.objects.all().select_related("user"), self.request.user)
         return self.filter_status(qs)
 
     def perform_create(self, serializer):
@@ -138,16 +135,15 @@ class TimeSheetEntryViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, Reviewa
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = TimeSheetEntry.objects.all().select_related("user", "project")
-        qs = qs if is_reviewer(self.request.user) else qs.filter(user=self.request.user)
+        qs = filter_review_queryset(
+            TimeSheetEntry.objects.all().select_related("user", "project"),
+            self.request.user,
+        )
         return self.filter_status(qs)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-
-from rest_framework import permissions, viewsets
-from rest_framework.parsers import MultiPartParser, FormParser
 
 class ClaimViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, ReviewableMixin, viewsets.ModelViewSet):
     serializer_class = ClaimSerializer
@@ -155,8 +151,7 @@ class ClaimViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, ReviewableMixin,
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        qs = Claim.objects.all().select_related("user")
-        qs = qs if is_reviewer(self.request.user) else qs.filter(user=self.request.user)
+        qs = filter_review_queryset(Claim.objects.all().select_related("user"), self.request.user)
         return self.filter_status(qs)
 
     def perform_create(self, serializer):
@@ -168,8 +163,7 @@ class WorkFromHomeRequestViewSet(StatusFilterMixin, EmployeeOwnedStatusMixin, Re
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = WorkFromHomeRequest.objects.all().select_related("user")
-        qs = qs if is_reviewer(self.request.user) else qs.filter(user=self.request.user)
+        qs = filter_review_queryset(WorkFromHomeRequest.objects.all().select_related("user"), self.request.user)
         return self.filter_status(qs)
 
     def perform_create(self, serializer):

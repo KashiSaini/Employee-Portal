@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let currentQuery = (searchInput?.value || "").trim();
     let currentCanAssignRoles = false;
+    let currentTeamChoices = [];
 
     function setMessage(text, type) {
         if (!messageBox) return;
@@ -94,6 +95,21 @@ document.addEventListener("DOMContentLoaded", function () {
         `;
     }
 
+    function renderTeamOptions(user) {
+        const options = ['<option value="">Select team</option>'];
+
+        for (const choice of currentTeamChoices) {
+            const isSelected = choice.value === (user.team || "");
+            options.push(`
+                <option value="${escapeHtml(choice.value)}" ${isSelected ? "selected" : ""}>
+                    ${escapeHtml(choice.label)}
+                </option>
+            `);
+        }
+
+        return options.join("");
+    }
+
     function renderRoleForm(user) {
         if (!currentCanAssignRoles) {
             return '<p class="read-only-note">View only. Role changes can be made by a superadmin.</p>';
@@ -113,6 +129,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     <input type="checkbox" name="is_manager" ${user.is_manager ? "checked" : ""}>
                     Manager
                 </label>
+                <label class="role-toggle">
+                    <span>Team</span>
+                    <select name="team">
+                        ${renderTeamOptions(user)}
+                    </select>
+                </label>
                 <button type="submit" class="btn-primary btn-small">Save Roles</button>
             </form>
         `;
@@ -121,6 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function renderUsers(data) {
         currentCanAssignRoles = Boolean(data.can_assign_roles);
         currentQuery = data.search_query || "";
+        currentTeamChoices = Array.isArray(data.team_choices) ? data.team_choices : [];
 
         if (searchInput) {
             searchInput.value = currentQuery;
@@ -137,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (rolesNote) {
             rolesNote.textContent = currentCanAssignRoles
-                ? "Update HR, manager, or superadmin access for existing users."
+                ? "Update team assignments and portal roles for existing users."
                 : "View only. Contact a superadmin if someone needs a role change.";
         }
 
@@ -156,7 +179,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <p>
                             ${escapeHtml(user.employee_id)}<br>
                             ${escapeHtml(user.email || "No email added")}<br>
-                            ${escapeHtml(user.username)}
+                            ${escapeHtml(user.username)}<br>
+                            Team: ${escapeHtml(user.team_display || "Not assigned")}
                         </p>
                     </td>
                     <td>${renderRolePills(user)}</td>
@@ -241,6 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
         payload.append("is_superuser", form.querySelector('[name="is_superuser"]').checked ? "true" : "false");
         payload.append("is_hr", form.querySelector('[name="is_hr"]').checked ? "true" : "false");
         payload.append("is_manager", form.querySelector('[name="is_manager"]').checked ? "true" : "false");
+        payload.append("team", form.querySelector('[name="team"]')?.value || "");
 
         try {
             const response = await fetch(roleApiUrl, {

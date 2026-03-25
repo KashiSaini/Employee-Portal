@@ -2,6 +2,8 @@ from functools import wraps
 from django.contrib import messages
 from django.shortcuts import redirect
 
+from accounts.access import is_reviewer
+
 
 def approval_access_required(view_func):
     @wraps(view_func)
@@ -11,7 +13,7 @@ def approval_access_required(view_func):
         if not user.is_authenticated:
             return redirect("login")
 
-        if user.is_staff or getattr(user, "is_hr", False) or getattr(user, "is_manager", False):
+        if is_reviewer(user):
             return view_func(request, *args, **kwargs)
 
         messages.error(request, "You are not allowed to access the approval center.")

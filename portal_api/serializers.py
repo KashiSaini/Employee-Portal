@@ -82,6 +82,7 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
 
 class PortalUserListSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
+    team_display = serializers.CharField(source="get_team_display", read_only=True)
     roles = serializers.SerializerMethodField()
 
     class Meta:
@@ -92,6 +93,8 @@ class PortalUserListSerializer(serializers.ModelSerializer):
             "username",
             "full_name",
             "email",
+            "team",
+            "team_display",
             "is_superuser",
             "is_hr",
             "is_manager",
@@ -112,6 +115,8 @@ class PortalUserListSerializer(serializers.ModelSerializer):
             roles.append("Manager")
         if not roles:
             roles.append("Employee")
+        if obj.team:
+            roles.append(f"{obj.get_team_display()} Team")
 
         return roles
 
@@ -121,6 +126,7 @@ class PortalUserRoleUpdateSerializer(serializers.Serializer):
     is_superuser = serializers.BooleanField(required=False, default=False)
     is_hr = serializers.BooleanField(required=False, default=False)
     is_manager = serializers.BooleanField(required=False, default=False)
+    team = serializers.ChoiceField(choices=User.TEAM_CHOICES, required=False, allow_blank=True)
 
     def validate_user_id(self, value):
         try:
@@ -132,11 +138,16 @@ class PortalUserRoleUpdateSerializer(serializers.Serializer):
         request = self.context["request"]
         target_user = attrs["user_id"]
         make_superadmin = attrs.get("is_superuser", False)
+        is_manager = attrs.get("is_manager", target_user.is_manager)
+        team = attrs.get("team", target_user.team)
 
         if target_user == request.user and not make_superadmin:
             raise serializers.ValidationError(
                 {"detail": "You cannot remove your own superadmin access from this page."}
             )
+
+        if is_manager and not team:
+            raise serializers.ValidationError({"team": "Team is required for managers."})
 
         return attrs
 
@@ -153,7 +164,8 @@ class PortalUserRoleUpdateSerializer(serializers.Serializer):
 
         target_user.is_hr = self.validated_data.get("is_hr", False)
         target_user.is_manager = self.validated_data.get("is_manager", False)
-        target_user.save(update_fields=["is_superuser", "is_staff", "is_hr", "is_manager"])
+        target_user.team = self.validated_data.get("team", target_user.team)
+        target_user.save(update_fields=["is_superuser", "is_staff", "is_hr", "is_manager", "team"])
         return target_user
 
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone as dt_timezone
+from datetime import date, datetime, timezone as dt_timezone
 from unittest.mock import patch
 
 from django.urls import reverse
@@ -228,6 +228,8 @@ class SessionAttendanceApiTests(APITestCase):
 class UserManagementApiTests(APITestCase):
     def setUp(self):
         self.password = "testpass123"
+        self.java_team = User.TEAM_JAVA
+        self.python_team = User.TEAM_PYTHON
         self.superadmin = User.objects.create_superuser(
             username="superadmin-api",
             email="superadmin.api@example.com",
@@ -248,6 +250,14 @@ class UserManagementApiTests(APITestCase):
             employee_id="EMP302",
             is_manager=True,
         )
+        self.team_manager_user = User.objects.create_user(
+            username="java-manager-api",
+            email="java.manager.api@example.com",
+            password=self.password,
+            employee_id="EMP304",
+            is_manager=True,
+            team=self.java_team,
+        )
         self.employee_user = User.objects.create_user(
             username="employee-api",
             email="employee.api@example.com",
@@ -255,6 +265,16 @@ class UserManagementApiTests(APITestCase):
             employee_id="EMP303",
             first_name="Portal",
             last_name="Employee",
+            team=self.java_team,
+        )
+        self.other_team_employee = User.objects.create_user(
+            username="python-employee-api",
+            email="python.employee.api@example.com",
+            password=self.password,
+            employee_id="EMP305",
+            first_name="Python",
+            last_name="Employee",
+            team=self.python_team,
         )
 
     def test_hr_can_fetch_user_management_summary(self):
@@ -274,6 +294,18 @@ class UserManagementApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_team_manager_only_sees_users_from_their_team(self):
+        self.client.force_authenticate(user=self.team_manager_user)
+
+        response = self.client.get(reverse("api-user-management-summary"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["total_users"], 2)
+        employee_ids = {user["employee_id"] for user in response.data["users"]}
+        self.assertIn(self.team_manager_user.employee_id, employee_ids)
+        self.assertIn(self.employee_user.employee_id, employee_ids)
+        self.assertNotIn(self.other_team_employee.employee_id, employee_ids)
+
     def test_hr_cannot_update_roles_via_api(self):
         self.client.force_authenticate(user=self.hr_user)
 
@@ -284,6 +316,7 @@ class UserManagementApiTests(APITestCase):
                 "is_superuser": True,
                 "is_hr": True,
                 "is_manager": True,
+                "team": self.java_team,
             },
             format="json",
         )
@@ -304,6 +337,7 @@ class UserManagementApiTests(APITestCase):
                 "is_superuser": True,
                 "is_hr": True,
                 "is_manager": True,
+                "team": self.java_team,
             },
             format="json",
         )
@@ -314,6 +348,7 @@ class UserManagementApiTests(APITestCase):
         self.assertTrue(self.employee_user.is_staff)
         self.assertTrue(self.employee_user.is_hr)
         self.assertTrue(self.employee_user.is_manager)
+        self.assertEqual(self.employee_user.team, self.java_team)
 
     def test_superadmin_cannot_remove_own_superadmin_access_via_api(self):
         self.client.force_authenticate(user=self.superadmin)
@@ -333,6 +368,24 @@ class UserManagementApiTests(APITestCase):
         self.superadmin.refresh_from_db()
         self.assertTrue(self.superadmin.is_superuser)
         self.assertTrue(self.superadmin.is_staff)
+
+    def test_superadmin_must_assign_team_to_manager_role(self):
+        self.client.force_authenticate(user=self.superadmin)
+
+        response = self.client.post(
+            reverse("api-user-role-update"),
+            {
+                "user_id": self.employee_user.id,
+                "is_superuser": False,
+                "is_hr": False,
+                "is_manager": True,
+                "team": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("team", response.data)
 
 
 class DashboardSummaryApiTests(APITestCase):
@@ -360,3 +413,75 @@ class DashboardSummaryApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["today_work_log"]["first_login"], "12:31")
+
+
+class ManagerScopedReviewApiTests(APITestCase):
+    def setUp(self):
+        self.team_manager = User.objects.create_user(
+            username="scoped-manager",
+            email="scoped.manager@example.com",
+            password="testpass123",
+            employee_id="EMP500",
+            is_manager=True,
+            team=User.TEAM_JAVA,
+        )
+        self.java_employee = User.objects.create_user(
+            username="java-employee",
+            email="java.employee@example.com",
+            password="testpass123",
+            employee_id="EMP501",
+            team=User.TEAM_JAVA,
+        )
+        self.python_employee = User.objects.create_user(
+            username="python-employee",
+            email="python.employee@example.com",
+            password="testpass123",
+            employee_id="EMP502",
+            team=User.TEAM_PYTHON,
+        )
+        self.java_leave = LeaveRequest.objects.create(
+            user=self.java_employee,
+            leave_type="casual",
+            start_date=date(2026, 3, 23),
+            end_date=date(2026, 3, 23),
+            reason="Java team leave",
+        )
+        self.python_leave = LeaveRequest.objects.create(
+            user=self.python_employee,
+            leave_type="casual",
+            start_date=date(2026, 3, 24),
+            end_date=date(2026, 3, 24),
+            reason="Python team leave",
+        )
+
+    def test_team_manager_only_gets_pending_requests_for_their_team(self):
+        self.client.force_authenticate(user=self.team_manager)
+
+        response = self.client.get(reverse("api-leave-list"), {"status": "pending"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        returned_ids = {item["id"] for item in response.data}
+        self.assertEqual(returned_ids, {self.java_leave.id})
+
+    def test_team_manager_cannot_approve_other_team_request(self):
+        self.client.force_authenticate(user=self.team_manager)
+
+        response = self.client.post(
+            reverse("api-leave-approve", args=[self.python_leave.id]),
+            {"remarks": "Not my team"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.python_leave.refresh_from_db()
+        self.assertEqual(self.python_leave.status, "pending")
+
+    def test_dashboard_summary_counts_only_team_pending_approvals_for_manager(self):
+        self.client.force_authenticate(user=self.team_manager)
+
+        response = self.client.get(reverse("api-dashboard-summary"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["can_review"])
+        self.assertEqual(response.data["approval_counts"]["leave"], 1)
+        self.assertEqual(response.data["approval_counts"]["total"], 1)

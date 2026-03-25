@@ -2,6 +2,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.access import filter_review_queryset, is_reviewer
 from attendance.models import DailyWorkLog
 from dashboard.views import get_upcoming_birthdays, get_upcoming_anniversaries, get_recent_activity
 from profiles.models import EmployeeProfile
@@ -10,10 +11,6 @@ from timesheet.models import TimeSheetEntry
 from claims.models import Claim
 from wfh.models import WorkFromHomeRequest
 from django.utils import timezone
-
-
-def is_reviewer(user):
-    return user.is_staff or getattr(user, "is_hr", False) or getattr(user, "is_manager", False)
 
 
 def format_local_datetime(value, pattern):
@@ -63,11 +60,26 @@ class DashboardSummaryAPIView(APIView):
         }
 
         if can_review:
-            approval_counts["leave"] = LeaveRequest.objects.filter(status="pending").count()
-            approval_counts["short_leave"] = ShortLeaveRequest.objects.filter(status="pending").count()
-            approval_counts["timesheet"] = TimeSheetEntry.objects.filter(status="pending").count()
-            approval_counts["claim"] = Claim.objects.filter(status="pending").count()
-            approval_counts["wfh"] = WorkFromHomeRequest.objects.filter(status="pending").count()
+            approval_counts["leave"] = filter_review_queryset(
+                LeaveRequest.objects.filter(status="pending"),
+                request.user,
+            ).count()
+            approval_counts["short_leave"] = filter_review_queryset(
+                ShortLeaveRequest.objects.filter(status="pending"),
+                request.user,
+            ).count()
+            approval_counts["timesheet"] = filter_review_queryset(
+                TimeSheetEntry.objects.filter(status="pending"),
+                request.user,
+            ).count()
+            approval_counts["claim"] = filter_review_queryset(
+                Claim.objects.filter(status="pending"),
+                request.user,
+            ).count()
+            approval_counts["wfh"] = filter_review_queryset(
+                WorkFromHomeRequest.objects.filter(status="pending"),
+                request.user,
+            ).count()
             approval_counts["total"] = sum(approval_counts.values())
 
         alerts = []
@@ -90,6 +102,8 @@ class DashboardSummaryAPIView(APIView):
                 "phone": request.user.phone or "",
                 "department": request.user.department or "",
                 "designation": request.user.designation or "",
+                "team": request.user.team or "",
+                "team_display": request.user.get_team_display() if request.user.team else "",
                 "join_date": str(profile.join_date) if profile.join_date else "",
                 "date_of_birth": str(profile.date_of_birth) if profile.date_of_birth else "",
                 "completion_percentage": profile.completion_percentage,

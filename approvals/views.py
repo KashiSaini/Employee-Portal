@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from accounts.access import filter_review_queryset
 from claims.models import Claim
 from leave_management.models import LeaveRequest, ShortLeaveRequest
 from timesheet.models import TimeSheetEntry
@@ -39,11 +40,26 @@ def handle_review(request, obj, page_title, record_name, summary_fields, approve
 
 @approval_access_required
 def approval_dashboard(request):
-    leave_qs = LeaveRequest.objects.filter(status="pending").select_related("user").order_by("-applied_at")
-    short_leave_qs = ShortLeaveRequest.objects.filter(status="pending").select_related("user").order_by("-applied_at")
-    timesheet_qs = TimeSheetEntry.objects.filter(status="pending").select_related("user", "project").order_by("-created_at")
-    claim_qs = Claim.objects.filter(status="pending").select_related("user").order_by("-submitted_at")
-    wfh_qs = WorkFromHomeRequest.objects.filter(status="pending").select_related("user").order_by("-applied_at")
+    leave_qs = filter_review_queryset(
+        LeaveRequest.objects.filter(status="pending").select_related("user"),
+        request.user,
+    ).order_by("-applied_at")
+    short_leave_qs = filter_review_queryset(
+        ShortLeaveRequest.objects.filter(status="pending").select_related("user"),
+        request.user,
+    ).order_by("-applied_at")
+    timesheet_qs = filter_review_queryset(
+        TimeSheetEntry.objects.filter(status="pending").select_related("user", "project"),
+        request.user,
+    ).order_by("-created_at")
+    claim_qs = filter_review_queryset(
+        Claim.objects.filter(status="pending").select_related("user"),
+        request.user,
+    ).order_by("-submitted_at")
+    wfh_qs = filter_review_queryset(
+        WorkFromHomeRequest.objects.filter(status="pending").select_related("user"),
+        request.user,
+    ).order_by("-applied_at")
 
     pending_leave_count = leave_qs.count()
     pending_short_leave_count = short_leave_qs.count()
@@ -77,7 +93,10 @@ def approval_dashboard(request):
 
 @approval_access_required
 def review_leave(request, pk):
-    leave = get_object_or_404(LeaveRequest.objects.select_related("user"), pk=pk)
+    leave = get_object_or_404(
+        filter_review_queryset(LeaveRequest.objects.select_related("user"), request.user),
+        pk=pk,
+    )
 
     summary_fields = [
         ("Employee", employee_label(leave.user)),
@@ -101,7 +120,10 @@ def review_leave(request, pk):
 
 @approval_access_required
 def review_short_leave(request, pk):
-    short_leave = get_object_or_404(ShortLeaveRequest.objects.select_related("user"), pk=pk)
+    short_leave = get_object_or_404(
+        filter_review_queryset(ShortLeaveRequest.objects.select_related("user"), request.user),
+        pk=pk,
+    )
 
     summary_fields = [
         ("Employee", employee_label(short_leave.user)),
@@ -124,7 +146,10 @@ def review_short_leave(request, pk):
 
 @approval_access_required
 def review_timesheet(request, pk):
-    entry = get_object_or_404(TimeSheetEntry.objects.select_related("user", "project"), pk=pk)
+    entry = get_object_or_404(
+        filter_review_queryset(TimeSheetEntry.objects.select_related("user", "project"), request.user),
+        pk=pk,
+    )
 
     summary_fields = [
         ("Employee", employee_label(entry.user)),
@@ -147,7 +172,10 @@ def review_timesheet(request, pk):
 
 @approval_access_required
 def review_claim(request, pk):
-    claim = get_object_or_404(Claim.objects.select_related("user"), pk=pk)
+    claim = get_object_or_404(
+        filter_review_queryset(Claim.objects.select_related("user"), request.user),
+        pk=pk,
+    )
 
     summary_fields = [
         ("Employee", employee_label(claim.user)),
@@ -171,7 +199,10 @@ def review_claim(request, pk):
 
 @approval_access_required
 def review_wfh(request, pk):
-    wfh_request = get_object_or_404(WorkFromHomeRequest.objects.select_related("user"), pk=pk)
+    wfh_request = get_object_or_404(
+        filter_review_queryset(WorkFromHomeRequest.objects.select_related("user"), request.user),
+        pk=pk,
+    )
 
     summary_fields = [
         ("Employee", employee_label(wfh_request.user)),

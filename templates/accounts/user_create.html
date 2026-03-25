@@ -10,6 +10,8 @@
         <p>
             {% if can_assign_roles %}
                 Create a new portal user and assign access roles immediately.
+            {% elif is_team_manager %}
+                Create a new employee user for your assigned team only.
             {% else %}
                 Create a new employee user. Special roles can be assigned later by a superadmin.
             {% endif %}
@@ -124,6 +126,18 @@
                 {% if create_form.designation.errors %}
                     <ul class="form-error-list">
                         {% for error in create_form.designation.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-field">
+                <label for="{{ create_form.team.id_for_label }}">Team</label>
+                {{ create_form.team }}
+                {% if create_form.team.errors %}
+                    <ul class="form-error-list">
+                        {% for error in create_form.team.errors %}
                             <li>{{ error }}</li>
                         {% endfor %}
                     </ul>

@@ -7,6 +7,8 @@ from .models import User
 class ManageUsersViewTests(TestCase):
     def setUp(self):
         self.password = "testpass123"
+        self.java_team = User.TEAM_JAVA
+        self.python_team = User.TEAM_PYTHON
         self.superadmin = User.objects.create_superuser(
             username="superadmin",
             email="superadmin@example.com",
@@ -27,11 +29,27 @@ class ManageUsersViewTests(TestCase):
             employee_id="EMP003",
             is_manager=True,
         )
+        self.team_manager_user = User.objects.create_user(
+            username="java-manager",
+            email="java.manager@example.com",
+            password=self.password,
+            employee_id="EMP005",
+            is_manager=True,
+            team=self.java_team,
+        )
         self.employee_user = User.objects.create_user(
             username="employee-user",
             email="employee@example.com",
             password=self.password,
             employee_id="EMP004",
+            team=self.java_team,
+        )
+        self.other_team_employee = User.objects.create_user(
+            username="python-user",
+            email="python@example.com",
+            password=self.password,
+            employee_id="EMP006",
+            team=self.python_team,
         )
 
     def test_hr_can_access_user_management_page(self):
@@ -66,6 +84,23 @@ class ManageUsersViewTests(TestCase):
         response = self.client.get(reverse("create_user"))
 
         self.assertRedirects(response, reverse("dashboard_home"))
+
+    def test_team_manager_can_access_only_their_team_on_user_management_page(self):
+        self.client.force_login(self.team_manager_user)
+
+        response = self.client.get(reverse("manage_users"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.employee_user.employee_id)
+        self.assertNotContains(response, self.other_team_employee.employee_id)
+
+    def test_team_manager_can_access_create_user_page(self):
+        self.client.force_login(self.team_manager_user)
+
+        response = self.client.get(reverse("create_user"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Create User")
 
     def test_hr_cannot_update_roles(self):
         self.client.force_login(self.hr_user)
@@ -102,6 +137,7 @@ class ManageUsersViewTests(TestCase):
                 "department": "Operations",
                 "designation": "Executive",
                 "phone": "1234567890",
+                "team": self.java_team,
                 "password1": "strongpass123",
                 "password2": "strongpass123",
                 "is_hr": "on",
@@ -116,6 +152,7 @@ class ManageUsersViewTests(TestCase):
         self.assertFalse(created_user.is_manager)
         self.assertFalse(created_user.is_superuser)
         self.assertFalse(created_user.is_staff)
+        self.assertEqual(created_user.team, self.java_team)
 
     def test_superadmin_can_create_user_with_roles(self):
         self.client.force_login(self.superadmin)
@@ -131,6 +168,7 @@ class ManageUsersViewTests(TestCase):
                 "department": "HR",
                 "designation": "Lead",
                 "phone": "1234567890",
+                "team": self.python_team,
                 "password1": "strongpass123",
                 "password2": "strongpass123",
                 "is_hr": "on",
@@ -145,6 +183,58 @@ class ManageUsersViewTests(TestCase):
         self.assertTrue(created_user.is_manager)
         self.assertTrue(created_user.is_superuser)
         self.assertTrue(created_user.is_staff)
+        self.assertEqual(created_user.team, self.python_team)
+
+    def test_team_manager_cannot_create_user_for_another_team(self):
+        self.client.force_login(self.team_manager_user)
+
+        response = self.client.post(
+            reverse("create_user"),
+            {
+                "employee_id": "EMP102",
+                "username": "python-new-user",
+                "first_name": "Python",
+                "last_name": "User",
+                "email": "python.new@example.com",
+                "department": "Engineering",
+                "designation": "Developer",
+                "phone": "1234567890",
+                "team": self.python_team,
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(employee_id="EMP102").exists())
+        self.assertContains(response, "Select a valid choice")
+
+    def test_team_manager_can_create_user_for_own_team(self):
+        self.client.force_login(self.team_manager_user)
+
+        response = self.client.post(
+            reverse("create_user"),
+            {
+                "employee_id": "EMP103",
+                "username": "java-new-user",
+                "first_name": "Java",
+                "last_name": "User",
+                "email": "java.new@example.com",
+                "department": "Engineering",
+                "designation": "Developer",
+                "phone": "1234567890",
+                "team": self.java_team,
+                "password1": "strongpass123",
+                "password2": "strongpass123",
+            },
+        )
+
+        self.assertRedirects(response, f"{reverse('manage_users')}?q=EMP103")
+        created_user = User.objects.get(employee_id="EMP103")
+        self.assertEqual(created_user.team, self.java_team)
+        self.assertFalse(created_user.is_manager)
+        self.assertFalse(created_user.is_hr)
+        self.assertFalse(created_user.is_superuser)
 
     def test_superadmin_can_update_existing_roles(self):
         self.client.force_login(self.superadmin)
@@ -157,6 +247,7 @@ class ManageUsersViewTests(TestCase):
                 "is_hr": "on",
                 "is_manager": "on",
                 "is_superuser": "on",
+                "team": self.java_team,
             },
         )
 
@@ -166,13 +257,14 @@ class ManageUsersViewTests(TestCase):
         self.assertTrue(self.employee_user.is_manager)
         self.assertTrue(self.employee_user.is_superuser)
         self.assertTrue(self.employee_user.is_staff)
+        self.assertEqual(self.employee_user.team, self.java_team)
 
     def test_superadmin_can_remove_superadmin_role_from_another_user(self):
         other_superadmin = User.objects.create_superuser(
             username="other-superadmin",
             email="other.superadmin@example.com",
             password=self.password,
-            employee_id="EMP005",
+            employee_id="EMP007",
         )
         self.client.force_login(self.superadmin)
 

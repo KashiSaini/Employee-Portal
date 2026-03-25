@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from .access import can_access_user_management, can_assign_user_roles, can_create_users, filter_user_management_queryset
 from .forms import LoginForm, PortalUserCreationForm
 from .models import User
 
@@ -67,14 +68,6 @@ def logout_view(request):
     return redirect("login")
 
 
-def _can_access_user_management(user):
-    return user.is_superuser or getattr(user, "is_hr", False)
-
-
-def _can_assign_user_roles(user):
-    return user.is_superuser
-
-
 def _user_management_redirect(search_query=""):
     redirect_url = reverse("manage_users")
     if search_query:
@@ -83,10 +76,13 @@ def _user_management_redirect(search_query=""):
 
 
 def _user_management_only_response(request):
-    if _can_access_user_management(request.user):
+    if can_access_user_management(request.user):
         return None
 
-    messages.error(request, "Only superadmin and HR users can access the user management page.")
+    messages.error(
+        request,
+        "Only superadmin, HR, and managers with an assigned team can access the user management page.",
+    )
     return redirect("dashboard_home")
 
 
@@ -97,7 +93,7 @@ def manage_users_view(request):
         return blocked_response
 
     search_query = request.GET.get("q", "").strip()
-    can_assign_roles = _can_assign_user_roles(request.user)
+    can_assign_roles = can_assign_user_roles(request.user)
 
     if request.method == "POST":
         search_query = request.POST.get("q", "").strip()
@@ -111,9 +107,14 @@ def manage_users_view(request):
             target_user = get_object_or_404(User, pk=request.POST.get("user_id"))
             make_superadmin = request.POST.get("is_superuser") == "on"
             was_superadmin = target_user.is_superuser
+            target_team = request.POST.get("team", target_user.team).strip()
 
             if target_user == request.user and not make_superadmin:
                 messages.error(request, "You cannot remove your own superadmin access from this page.")
+                return redirect(_user_management_redirect(search_query))
+
+            if request.POST.get("is_manager") == "on" and not target_team:
+                messages.error(request, "Team is required for managers.")
                 return redirect(_user_management_redirect(search_query))
 
             target_user.is_superuser = make_superadmin
@@ -124,13 +125,15 @@ def manage_users_view(request):
 
             target_user.is_hr = request.POST.get("is_hr") == "on"
             target_user.is_manager = request.POST.get("is_manager") == "on"
-            target_user.save(update_fields=["is_superuser", "is_staff", "is_hr", "is_manager"])
+            target_user.team = target_team
+            target_user.save(update_fields=["is_superuser", "is_staff", "is_hr", "is_manager", "team"])
 
             display_name = target_user.get_full_name() or target_user.username
             messages.success(request, f"Updated portal roles for {display_name}.")
             return redirect(_user_management_redirect(search_query))
 
-    users = User.objects.all().order_by("employee_id", "username")
+    scoped_users = filter_user_management_queryset(User.objects.all(), request.user)
+    users = scoped_users.order_by("employee_id", "username")
 
     if search_query:
         users = users.filter(
@@ -144,9 +147,10 @@ def manage_users_view(request):
     context = {
         "users": users,
         "search_query": search_query,
-        "total_users": User.objects.count(),
+        "total_users": scoped_users.count(),
         "filtered_count": users.count(),
         "can_assign_roles": can_assign_roles,
+        "team_choices": User.TEAM_CHOICES,
     }
     return render(request, "accounts/user_management.html", context)
 
@@ -157,10 +161,15 @@ def create_user_view(request):
     if blocked_response:
         return blocked_response
 
-    can_assign_roles = _can_assign_user_roles(request.user)
+    if not can_create_users(request.user):
+        messages.error(request, "You are not allowed to create portal users.")
+        return redirect("dashboard_home")
+
+    can_assign_roles = can_assign_user_roles(request.user)
     create_form = PortalUserCreationForm(
         request.POST or None,
         allow_role_assignment=can_assign_roles,
+        actor=request.user,
     )
 
     if request.method == "POST":
@@ -175,5 +184,6 @@ def create_user_view(request):
     context = {
         "create_form": create_form,
         "can_assign_roles": can_assign_roles,
+        "is_team_manager": request.user.has_team_scope,
     }
     return render(request, "accounts/user_create.html", context)
