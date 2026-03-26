@@ -132,6 +132,19 @@
                 </div>
             </div>
 
+
+            <div class="card mini-card">
+                <div class="card-header">
+                    <h3>🟢 Who's Online</h3>
+                </div>
+                <div class="mini-list" id="online-users-container">
+                    <p class="text-muted">Connecting...</p>
+                </div>
+            </div>
+
+
+
+
             <div class="card mini-card">
                 <div class="card-header">
                     <h3>Upcoming Birthdays</h3>
@@ -195,4 +208,31 @@
 </div>
 
 <script src="{% static 'js/dashboard_api.js' %}"></script>
+
+<script>
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const wsUrl = protocol + window.location.host + '/ws/online-status/';
+
+    const onlineSocket = new WebSocket(wsUrl);
+
+    onlineSocket.onopen = function(e) {
+        console.log("WebSocket connected!");
+        document.getElementById('online-users-container').innerHTML = "<p>You are online!</p>";
+    };
+
+    onlineSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const container = document.getElementById('online-users-container');
+        
+        if (data.status === "update") {
+             // Added a little formatting to make it look nice in your mini-list
+             container.innerHTML = `<p class="text-success" style="margin: 0; padding: 5px 0;">${data.details}</p>`;
+        }
+    };
+
+    onlineSocket.onclose = function(e) {
+        document.getElementById('online-users-container').innerHTML = "<p class='text-danger'>Offline</p>";
+    };
+</script>
+
 {% endblock %}

@@ -108,7 +108,7 @@ def get_recent_activity(user, limit=6):
         })
 
     activities.sort(key=lambda item: item["time"], reverse=True)
-    return activities[:limit]
+    return activities[:3]
 
 
 @login_required
