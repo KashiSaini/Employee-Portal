@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -13,7 +14,7 @@ from accounts.models import User
 
 from .forms import PublicHolidayForm, SalarySlipGenerationForm
 from .models import CompanyDocument, EmployeeSalary, PolicyDocument, PublicHoliday, SalarySlip
-from .services import generate_salary_slip
+from .services import build_salary_slip_pdf, generate_salary_slip
 
 
 def _salary_management_redirect(search_query=""):
@@ -39,6 +40,15 @@ def _public_holiday_only_response(request):
     return redirect("dashboard_home")
 
 
+def _salary_slip_queryset_for_request(request):
+    slips = SalarySlip.objects.select_related("user").filter(is_visible=True)
+
+    if request.user.is_superuser or getattr(request.user, "is_hr", False):
+        return slips
+
+    return slips.filter(user=request.user)
+
+
 @login_required
 def salary_slip_list(request):
     slips = SalarySlip.objects.filter(user=request.user, is_visible=True)
@@ -55,13 +65,19 @@ def salary_slip_list(request):
 
 @login_required
 def salary_slip_detail(request, pk):
-    slips = SalarySlip.objects.select_related("user").filter(is_visible=True)
-
-    if not (request.user.is_superuser or getattr(request.user, "is_hr", False)):
-        slips = slips.filter(user=request.user)
-
-    slip = get_object_or_404(slips, pk=pk)
+    slip = get_object_or_404(_salary_slip_queryset_for_request(request), pk=pk)
     return render(request, "documents/salary_slip_detail.html", {"slip": slip})
+
+
+@login_required
+def salary_slip_pdf(request, pk):
+    slip = get_object_or_404(_salary_slip_queryset_for_request(request), pk=pk)
+    pdf_bytes = build_salary_slip_pdf(slip)
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = (
+        f'inline; filename="salary-slip-{slip.user.employee_id}-{slip.year}-{slip.month:02d}.pdf"'
+    )
+    return response
 
 
 @login_required

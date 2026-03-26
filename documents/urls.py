@@ -8,12 +8,14 @@ from .views import (
     salary_management,
     salary_slip_detail,
     salary_slip_list,
+    salary_slip_pdf,
 )
 
 urlpatterns = [
     path("salary-slips/", salary_slip_list, name="salary_slip_list"),
     path("salary-slips/manage/", salary_management, name="salary_management"),
     path("salary-slips/<int:pk>/", salary_slip_detail, name="salary_slip_detail"),
+    path("salary-slips/<int:pk>/pdf/", salary_slip_pdf, name="salary_slip_pdf"),
     path("public-holidays/", public_holiday_list, name="public_holiday_list"),
     path("public-holidays/<int:pk>/delete/", public_holiday_delete, name="public_holiday_delete"),
     path("policies/", policy_list, name="policy_list"),

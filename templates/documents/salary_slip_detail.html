@@ -10,6 +10,7 @@
         <p>{{ slip.user.get_full_name|default:slip.user.username }} | {{ slip.user.employee_id }}</p>
     </div>
     <div class="page-head-actions">
+        <a href="{% url 'salary_slip_pdf' slip.pk %}" target="_blank" class="btn-primary">View PDF</a>
         <a href="{% url 'salary_slip_list' %}" class="btn-secondary">Back to Salary Slips</a>
     </div>
 </div>
@@ -30,7 +31,7 @@
             <strong>INR {{ slip.daily_salary }}</strong>
         </div>
         <div class="info-row">
-            <span>Total Days In Month</span>
+            <span>Total Payable Working Days In Month</span>
             <strong>{{ slip.total_days_in_month }}</strong>
         </div>
         <div class="info-row">
@@ -38,19 +39,15 @@
             <strong>{{ slip.paid_timesheet_days }}</strong>
         </div>
         <div class="info-row">
-            <span>Paid Weekend Days</span>
-            <strong>{{ slip.paid_weekend_days }}</strong>
-        </div>
-        <div class="info-row">
             <span>Paid Public Holiday Days</span>
             <strong>{{ slip.paid_public_holiday_days }}</strong>
         </div>
         <div class="info-row">
-            <span>Total Payable Days</span>
+            <span>Total Salary Counted Days</span>
             <strong>{{ slip.payable_days }}</strong>
         </div>
         <div class="info-row">
-            <span>Unpaid Days</span>
+            <span>Unpaid Working Days</span>
             <strong>{{ slip.unpaid_days }}</strong>
         </div>
         <div class="info-row">

@@ -31,7 +31,7 @@ class SalarySlipGenerationTests(TestCase):
             updated_by=self.superadmin,
         )
 
-    def test_generate_salary_slip_counts_weekends_and_public_holidays_without_double_counting(self):
+    def test_generate_salary_slip_excludes_weekends_from_payable_days(self):
         for work_date in [
             "2026-04-01",
             "2026-04-02",
@@ -68,14 +68,14 @@ class SalarySlipGenerationTests(TestCase):
 
         slip = generate_salary_slip(self.employee, 2026, 4)
 
-        self.assertEqual(slip.total_days_in_month, 30)
+        self.assertEqual(slip.total_days_in_month, 22)
         self.assertEqual(slip.paid_timesheet_days, 10)
-        self.assertEqual(slip.paid_weekend_days, 8)
+        self.assertEqual(slip.paid_weekend_days, 0)
         self.assertEqual(slip.paid_public_holiday_days, 1)
-        self.assertEqual(slip.payable_days, 19)
+        self.assertEqual(slip.payable_days, 11)
         self.assertEqual(slip.unpaid_days, 11)
         self.assertEqual(slip.monthly_salary, Decimal("30000.00"))
-        self.assertEqual(slip.net_salary, Decimal("19000.00"))
+        self.assertEqual(slip.net_salary, Decimal("15000.00"))
 
 
 class SalaryManagementViewTests(TestCase):
@@ -241,3 +241,14 @@ class SalarySlipListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "April")
         self.assertNotContains(response, "May")
+
+    def test_employee_can_open_salary_slip_pdf_view(self):
+        self.client.force_login(self.employee)
+        slip = SalarySlip.objects.get(user=self.employee, month=4, year=2026)
+
+        response = self.client.get(reverse("salary_slip_pdf", args=[slip.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("inline;", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"%PDF-"))
