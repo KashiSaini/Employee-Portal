@@ -103,7 +103,7 @@ def build_salary_slip_pdf(slip):
     ]
 
     commands = []
-    y_position = 780
+    y_position = 700
     for index, line in enumerate(lines):
         safe_line = _pdf_escape(line)
         font_size = 18 if index == 0 else 12
