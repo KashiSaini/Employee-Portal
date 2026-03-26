@@ -310,7 +310,7 @@ Notes:
 - the container runs migrations automatically on startup
 - static files are collected automatically
 - the default app port is `8000`
-- make sure your PostgreSQL database is reachable from the container
+- this project expects PostgreSQL to run on the host machine or an external server — no database container is included.
 
 ## Testing
 
