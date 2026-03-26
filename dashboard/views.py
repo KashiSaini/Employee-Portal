@@ -41,7 +41,7 @@ def get_upcoming_birthdays(limit=5):
         })
 
     items.sort(key=lambda item: item["date"])
-    return items[:limit]
+    return items[:3]
 
 
 def get_upcoming_anniversaries(limit=5):
@@ -61,7 +61,7 @@ def get_upcoming_anniversaries(limit=5):
         })
 
     items.sort(key=lambda item: item["date"])
-    return items[:limit]
+    return items[:3]
 
 
 def get_recent_activity(user, limit=6):

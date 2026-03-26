@@ -196,3 +196,12 @@ python manage.py runserver
 
 BlueThink Employee Portal is a full internal employee management system built with Django. It supports employee self-service, reviewer approvals, admin management, REST APIs, Swagger testing, and daily work sign off tracking.
 
+## NG Rock
+
+Bluthink Portal is also using NG Rock to use a local generated URL, So that Portal is Accessable for 
+others too 
+```bash
+ngrok http 8000
+```
+Then Url is Ready to use:
+https://unvaunting-india-retributively.ngrok-free.dev/

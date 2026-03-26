@@ -175,7 +175,7 @@ class SalarySlipViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return SalarySlip.objects.filter(user=self.request.user, is_visible=True)
+        return SalarySlip.objects.filter(user=self.request.user, is_visible=True).select_related("user")
 
 
 class PolicyDocumentViewSet(viewsets.ReadOnlyModelViewSet):

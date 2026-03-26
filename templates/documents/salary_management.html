@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Salary Management{% endblock %}
+{% block page_heading %}Salary Management{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>Employee Salary Management</h3>
+        <p>Only superadmin users can set monthly salary and generate salary slips.</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="{% url 'salary_slip_list' %}" class="btn-secondary">Back to Salary Slips</a>
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="section-card-header">
+        <h3>Generate Salary Slips</h3>
+        <p>Generate one employee slip or all configured employee slips for a selected month.</p>
+    </div>
+
+    <form method="post" class="search-inline-form">
+        {% csrf_token %}
+        <input type="hidden" name="q" value="{{ search_query }}">
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="{{ generation_form.employee.id_for_label }}">Employee</label>
+                {{ generation_form.employee }}
+            </div>
+            <div class="form-field">
+                <label for="{{ generation_form.month.id_for_label }}">Month</label>
+                {{ generation_form.month }}
+            </div>
+            <div class="form-field">
+                <label for="{{ generation_form.year.id_for_label }}">Year</label>
+                {{ generation_form.year }}
+            </div>
+        </div>
+        <div class="page-head-actions mt-20">
+            <button type="submit" name="action" value="generate_salary_slip" class="btn-primary">Generate Selected Slip</button>
+            <button type="submit" name="action" value="generate_all_salary_slips" class="btn-secondary">Generate All Slips</button>
+        </div>
+    </form>
+</div>
+
+<div class="section-card mt-20">
+    <form method="get" class="search-inline-form">
+        <input
+            type="text"
+            name="q"
+            value="{{ search_query }}"
+            placeholder="Search employees by employee ID, username, name, or email"
+        >
+        <button type="submit" class="btn-primary">Search</button>
+        {% if search_query %}
+            <a href="{% url 'salary_management' %}" class="btn-secondary">Clear</a>
+        {% endif %}
+    </form>
+    <p class="search-helper-text">Showing {{ filtered_count }} employee{{ filtered_count|pluralize }}.</p>
+</div>
+
+<div class="section-card mt-20">
+    <div class="section-card-header">
+        <h3>Employee Monthly Salary</h3>
+        <p>Save each employee's monthly salary here before generating slips.</p>
+    </div>
+
+    <div class="table-wrap">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Current Monthly Salary</th>
+                    <th>Last Updated</th>
+                    <th>Update Salary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                    <tr>
+                        <td class="user-cell">
+                            <strong>{{ employee.get_full_name|default:employee.username }}</strong>
+                            <p>
+                                {{ employee.employee_id }}<br>
+                                {{ employee.email|default:"No email added" }}<br>
+                                {{ employee.get_team_display|default:"No team assigned" }}
+                            </p>
+                        </td>
+                        <td>
+                            {% if employee.salary_config %}
+                                INR {{ employee.salary_config.monthly_salary }}
+                            {% else %}
+                                Not set
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if employee.salary_config %}
+                                {{ employee.salary_config.updated_at|date:"d M Y H:i" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" class="salary-update-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_salary">
+                                <input type="hidden" name="user_id" value="{{ employee.id }}">
+                                <input type="hidden" name="q" value="{{ search_query }}">
+                                <label class="salary-update-field">
+                                    <span>Monthly Salary</span>
+                                    <input
+                                        type="number"
+                                        name="monthly_salary"
+                                        min="0.01"
+                                        step="0.01"
+                                        value="{% if employee.salary_config %}{{ employee.salary_config.monthly_salary }}{% endif %}"
+                                        placeholder="Enter amount, e.g. 45000"
+                                        required
+                                    >
+                                </label>
+                                <button type="submit" class="btn-primary btn-small">Save Salary</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty-cell">No employees matched your search.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

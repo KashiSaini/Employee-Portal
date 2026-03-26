@@ -1017,6 +1017,43 @@ body {
     height: 16px;
 }
 
+.salary-update-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-width: 260px;
+}
+
+.salary-update-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1 1 220px;
+    min-width: 220px;
+    color: #374151;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.salary-update-field input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: white;
+    outline: none;
+    font-size: 14px;
+}
+
+.salary-update-field input:focus {
+    border-color: #5a57d4;
+}
+
+.salary-update-form .btn-small {
+    white-space: nowrap;
+}
+
 .read-only-note {
     color: #6b7280;
     font-size: 13px;
@@ -1038,6 +1075,11 @@ body {
 @media (max-width: 900px) {
     .role-form {
         align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .salary-update-form {
+        align-items: stretch;
         flex-direction: column;
     }
 }
@@ -1277,4 +1319,19 @@ body {
     background: #fee2e2;
     color: #991b1b;
     border: 1px solid #fecaca;
+}
+
+.portal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;      /* Makes it take up the exact full height of the screen */
+    overflow-y: auto;   /* Allows the sidebar itself to scroll ONLY if the menu items get too long */
+    width: 260px;       /* Keep your existing width, e.g., 250px or 260px */
+    z-index: 1000;      /* Keeps the sidebar floating above the content */
+}
+
+.portal-main {
+    margin-left: 260px; /* This MUST match the exact width of your sidebar! */
+    min-height: 100vh;
 }

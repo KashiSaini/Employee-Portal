@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Salary Slip Detail{% endblock %}
+{% block page_heading %}Salary Slip Detail{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>{{ slip.get_month_display }} {{ slip.year }} Salary Slip</h3>
+        <p>{{ slip.user.get_full_name|default:slip.user.username }} | {{ slip.user.employee_id }}</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="{% url 'salary_slip_list' %}" class="btn-secondary">Back to Salary Slips</a>
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="section-card-header">
+        <h3>Salary Summary</h3>
+        <p>Generated on {{ slip.generated_at|date:"d M Y H:i" }}</p>
+    </div>
+
+    <div class="profile-grid">
+        <div class="info-row">
+            <span>Monthly Salary</span>
+            <strong>INR {{ slip.monthly_salary }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Per Day Salary</span>
+            <strong>INR {{ slip.daily_salary }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Total Days In Month</span>
+            <strong>{{ slip.total_days_in_month }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Paid Time Sheet Days</span>
+            <strong>{{ slip.paid_timesheet_days }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Paid Weekend Days</span>
+            <strong>{{ slip.paid_weekend_days }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Paid Public Holiday Days</span>
+            <strong>{{ slip.paid_public_holiday_days }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Total Payable Days</span>
+            <strong>{{ slip.payable_days }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Unpaid Days</span>
+            <strong>{{ slip.unpaid_days }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Net Salary</span>
+            <strong>INR {{ slip.net_salary }}</strong>
+        </div>
+        <div class="info-row">
+            <span>Visibility</span>
+            <strong>{% if slip.is_visible %}Visible{% else %}Hidden{% endif %}</strong>
+        </div>
+    </div>
+
+    {% if slip.file %}
+        <div class="page-head-actions mt-20">
+            <a href="{{ slip.file.url }}" target="_blank" class="btn-primary">Download Uploaded File</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

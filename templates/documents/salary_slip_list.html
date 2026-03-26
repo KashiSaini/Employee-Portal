@@ -1,15 +1,22 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Salary Slips{% endblock %}
 {% block page_heading %}Salary Slips{% endblock %}
 
 {% block content %}
-<div data-salary-slip-page data-api-url="{% url 'api-salary-slips-list' %}">
+<div>
     <div class="profile-page-head">
         <div>
             <h3>My Salary Slips</h3>
-            <p>Download your uploaded monthly salary slips.</p>
+            <p>Your salary slip is calculated from approved time sheets, weekends, and public holidays.</p>
+        </div>
+        <div class="page-head-actions">
+            {% if can_manage_salary %}
+                <a href="{% url 'salary_management' %}" class="btn-primary">Manage Salary</a>
+            {% endif %}
+            {% if can_manage_holidays %}
+                <a href="{% url 'public_holiday_list' %}" class="btn-secondary">Public Holidays</a>
+            {% endif %}
         </div>
     </div>
 
@@ -24,19 +31,30 @@
                     <tr>
                         <th>Month</th>
                         <th>Year</th>
-                        <th>Uploaded On</th>
-                        <th>File</th>
+                        <th>Generated On</th>
+                        <th>Payable Days</th>
+                        <th>Net Salary</th>
+                        <th>Slip</th>
                     </tr>
                 </thead>
-                <tbody id="salary-slip-body">
-                    <tr>
-                        <td colspan="4" class="empty-cell">Loading...</td>
-                    </tr>
+                <tbody>
+                    {% for slip in slips %}
+                        <tr>
+                            <td>{{ slip.get_month_display }}</td>
+                            <td>{{ slip.year }}</td>
+                            <td>{{ slip.generated_at|date:"d M Y H:i" }}</td>
+                            <td>{{ slip.payable_days }}/{{ slip.total_days_in_month }}</td>
+                            <td>INR {{ slip.net_salary }}</td>
+                            <td><a href="{% url 'salary_slip_detail' slip.pk %}" class="receipt-link">View Slip</a></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-cell">No salary slips available yet.</td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
-<script src="{% static 'js/documents_api.js' %}"></script>
 {% endblock %}

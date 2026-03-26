@@ -1,3 +1,4 @@
+from django.urls import reverse
 from rest_framework import serializers
 from accounts.models import User
 from profiles.models import EmployeeProfile
@@ -269,9 +270,37 @@ class WorkFromHomeRequestSerializer(serializers.ModelSerializer):
 
 
 class SalarySlipSerializer(serializers.ModelSerializer):
+    month_display = serializers.CharField(source="get_month_display", read_only=True)
+    detail_url = serializers.SerializerMethodField()
+
     class Meta:
         model = SalarySlip
-        fields = "__all__"
+        fields = [
+            "id",
+            "user",
+            "month",
+            "month_display",
+            "year",
+            "file",
+            "total_days_in_month",
+            "paid_timesheet_days",
+            "paid_weekend_days",
+            "paid_public_holiday_days",
+            "payable_days",
+            "unpaid_days",
+            "monthly_salary",
+            "daily_salary",
+            "net_salary",
+            "generated_at",
+            "uploaded_at",
+            "is_visible",
+            "detail_url",
+        ]
+
+    def get_detail_url(self, obj):
+        request = self.context.get("request")
+        detail_url = reverse("salary_slip_detail", args=[obj.pk])
+        return request.build_absolute_uri(detail_url) if request else detail_url
 
 
 

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Public Holidays{% endblock %}
+{% block page_heading %}Public Holidays{% endblock %}
+
+{% block content %}
+<div class="profile-page-head">
+    <div>
+        <h3>Public Holiday Management</h3>
+        <p>Superadmin and HR users can add company-wide public holidays here.</p>
+    </div>
+    <div class="page-head-actions">
+        <a href="{% url 'salary_slip_list' %}" class="btn-secondary">Back to Salary Slips</a>
+    </div>
+</div>
+
+<div class="section-card">
+    <div class="section-card-header">
+        <h3>Add Public Holiday</h3>
+        <p>These holidays are included while generating salary slips.</p>
+    </div>
+
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_holiday">
+
+        <div class="form-field">
+            <label for="{{ form.name.id_for_label }}">Holiday Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}
+                <p class="error-text">{{ form.name.errors|join:", " }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.holiday_date.id_for_label }}">Holiday Date</label>
+            {{ form.holiday_date }}
+            {% if form.holiday_date.errors %}
+                <p class="error-text">{{ form.holiday_date.errors|join:", " }}</p>
+            {% endif %}
+        </div>
+
+        <div class="form-field" style="grid-column: 1 / -1;">
+            <label for="{{ form.description.id_for_label }}">Description</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+                <p class="error-text">{{ form.description.errors|join:", " }}</p>
+            {% endif %}
+        </div>
+
+        <div class="page-head-actions" style="grid-column: 1 / -1;">
+            <button type="submit" class="btn-primary">Add Public Holiday</button>
+        </div>
+    </form>
+</div>
+
+<div class="section-card mt-20">
+    <div class="section-card-header">
+        <h3>Configured Public Holidays</h3>
+    </div>
+
+    <div class="table-wrap">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for holiday in holidays %}
+                    <tr>
+                        <td>{{ holiday.holiday_date|date:"d M Y" }}</td>
+                        <td>{{ holiday.name }}</td>
+                        <td>{{ holiday.description|default:"-" }}</td>
+                        <td>
+                            <form method="post" action="{% url 'public_holiday_delete' holiday.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-secondary btn-small">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="empty-cell">No public holidays added yet.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
