@@ -925,7 +925,7 @@ body {
     align-items: center;
 }
 
-.search-inline-form input {
+.search-inline-input {
     flex: 1 1 280px;
     padding: 12px 14px;
     border: 1px solid #dbe3ef;
@@ -935,8 +935,14 @@ body {
     font-size: 14px;
 }
 
-.search-inline-form input:focus {
+.search-inline-input:focus {
     border-color: #5a57d4;
+}
+
+.salary-generate-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 .search-helper-text {

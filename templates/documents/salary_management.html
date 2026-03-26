@@ -20,7 +20,7 @@
         <p>Generate one employee slip or all configured employee slips for a selected month.</p>
     </div>
 
-    <form method="post" class="search-inline-form">
+    <form method="post" class="salary-generate-form">
         {% csrf_token %}
         <input type="hidden" name="q" value="{{ search_query }}">
         <div class="form-grid">
@@ -47,6 +47,7 @@
 <div class="section-card mt-20">
     <form method="get" class="search-inline-form">
         <input
+            class="search-inline-input"
             type="text"
             name="q"
             value="{{ search_query }}"
