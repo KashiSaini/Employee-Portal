@@ -27,21 +27,24 @@ def next_occurrence(original_date, today):
     return upcoming
 
 
-def get_upcoming_birthdays(limit=5):
+def get_upcoming_birthdays(limit=5, days_ahead=60):
     today = timezone.localdate()
     profiles = EmployeeProfile.objects.select_related("user").filter(date_of_birth__isnull=False)
 
     items = []
     for profile in profiles:
         upcoming = next_occurrence(profile.date_of_birth, today)
-        items.append({
-            "name": profile.user.get_full_name() or profile.user.username,
-            "date": upcoming,
-            "days_left": (upcoming - today).days,
-        })
+        days_left = (upcoming - today).days                                 #edit for 60 days
+
+        if 0 <= days_left <= days_ahead:
+            items.append({
+                "name": profile.user.get_full_name() or profile.user.username,
+                "date": upcoming,
+                "days_left": (upcoming - today).days,
+            })
 
     items.sort(key=lambda item: item["date"])
-    return items[:3]
+    return items[:limit]
 
 
 def get_upcoming_anniversaries(limit=5):
@@ -61,7 +64,7 @@ def get_upcoming_anniversaries(limit=5):
         })
 
     items.sort(key=lambda item: item["date"])
-    return items[:3]
+    return items[:limit]
 
 
 def get_recent_activity(user, limit=6):
