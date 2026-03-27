@@ -14,7 +14,7 @@ def timesheet_list(request):
 
 @login_required
 def timesheet_create(request):
-    form = TimeSheetEntryForm()
+    form = TimeSheetEntryForm(user=request.user)
     return render(
         request,
         "timesheet/timesheet_form.html",
@@ -34,7 +34,7 @@ def timesheet_update(request, pk):
         messages.error(request, "Approved entries cannot be edited.")
         return redirect("timesheet_list")
 
-    form = TimeSheetEntryForm(instance=entry)
+    form = TimeSheetEntryForm(instance=entry, user=request.user)
     return render(
         request,
         "timesheet/timesheet_form.html",
@@ -44,6 +44,7 @@ def timesheet_update(request, pk):
             "entry": entry,
         },
     )
+
 
 @login_required
 def timesheet_delete(request, pk):

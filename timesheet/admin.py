@@ -1,12 +1,13 @@
 from django.contrib import admin
+
 from .models import Project, TimeSheetEntry
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "is_active")
-    search_fields = ("name", "code")
-    list_filter = ("is_active",)
+    list_display = ("name", "code", "team_manager", "is_active")
+    search_fields = ("name", "code", "team_manager__username", "team_manager__employee_id")
+    list_filter = ("is_active", "team_manager__team")
 
 
 @admin.register(TimeSheetEntry)

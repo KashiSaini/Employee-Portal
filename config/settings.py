@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'profiles.apps.ProfilesConfig',
     'leave_management',
     'timesheet',
+    'projects',
     'claims',
     'wfh',
     'approvals',
@@ -193,4 +194,5 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
 

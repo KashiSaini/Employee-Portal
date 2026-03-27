@@ -7,6 +7,14 @@ class Project(models.Model):
     name = models.CharField(max_length=150, unique=True)
     code = models.CharField(max_length=30, unique=True)
     description = models.TextField(blank=True)
+    team_manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="managed_projects",
+        null=True,
+        blank=True,
+        limit_choices_to={"is_manager": True},
+    )
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

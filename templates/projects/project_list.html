@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Projects{% endblock %}
+{% block page_heading %}Projects{% endblock %}
+
+{% block content %}
+<div
+    data-project-management-page
+    data-summary-api-url="{% url 'api-project-management-summary' %}"
+    data-project-api-url="{% url 'api-project-list' %}"
+    data-project-detail-pattern="{% url 'api-project-detail' 0 %}"
+    data-project-assign-pattern="{% url 'api-project-assign-members' 0 %}"
+>
+    <div class="profile-page-head">
+        <div>
+            <h3>Project Management</h3>
+            <p>Create projects, assign team managers, and map team members before time sheet entry.</p>
+        </div>
+        <a href="{% url 'dashboard_home' %}" class="btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <div data-project-message class="api-message" style="display:none;"></div>
+
+    <div class="section-card">
+        <form method="get" class="search-inline-form" data-project-search-form>
+            <input
+                class="search-inline-input"
+                type="text"
+                name="q"
+                value=""
+                placeholder="Search by project code, project name, manager, or employee"
+                data-project-search-input
+            >
+            <button type="submit" class="btn-primary">Search</button>
+            <a href="{% url 'project_management' %}" class="btn-secondary" data-project-clear-link style="display:none;">Clear</a>
+        </form>
+
+        <p class="search-helper-text" data-project-counts>Loading projects...</p>
+    </div>
+
+    <div class="form-card mt-20" data-project-form-card>
+        <div class="section-card-header">
+            <h3 data-project-form-title>Create Project</h3>
+            <p data-project-form-description>Create a project and assign it to a team manager.</p>
+        </div>
+
+        <form class="profile-form" data-project-form>
+            <input type="hidden" name="project_id">
+
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="project-code">Project Code</label>
+                    <input id="project-code" type="text" name="code" maxlength="30" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="project-name">Project Name</label>
+                    <input id="project-name" type="text" name="name" maxlength="150" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="project-manager">Team Manager</label>
+                    <select id="project-manager" name="team_manager"></select>
+                </div>
+
+                <div class="form-field">
+                    <label for="project-active">Status</label>
+                    <label class="role-toggle project-status-toggle">
+                        <input id="project-active" type="checkbox" name="is_active" checked>
+                        Active Project
+                    </label>
+                </div>
+
+                <div class="form-field full-width">
+                    <label for="project-description">Description</label>
+                    <textarea id="project-description" name="description" rows="4" placeholder="Add the project scope or notes"></textarea>
+                </div>
+            </div>
+
+            <div class="page-head-actions">
+                <button type="submit" class="btn-primary" data-project-submit-button>Save Project</button>
+                <button type="button" class="btn-secondary" data-project-cancel-button style="display:none;">Cancel Edit</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="section-card mt-20">
+        <div class="section-card-header">
+            <h3>Project Assignment Matrix</h3>
+            <p data-project-role-note>Loading project permissions...</p>
+        </div>
+
+        <div class="table-wrap">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th>Team Manager</th>
+                        <th>Assigned Members</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody data-project-table-body>
+                    <tr>
+                        <td colspan="5" class="empty-cell">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="{% static 'js/project_management_api.js' %}"></script>
+{% endblock %}

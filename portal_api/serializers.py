@@ -1,12 +1,16 @@
 from django.urls import reverse
 from rest_framework import serializers
+
+from accounts.access import is_reviewer
 from accounts.models import User
-from profiles.models import EmployeeProfile
-from leave_management.models import LeaveRequest, ShortLeaveRequest
-from timesheet.models import TimeSheetEntry
 from claims.models import Claim
+from documents.models import CompanyDocument, PolicyDocument, SalarySlip
+from leave_management.models import LeaveRequest, ShortLeaveRequest
+from profiles.models import EmployeeProfile
+from projects.access import can_assign_project_members, get_assignable_team_members, is_user_assigned_to_project
+from projects.models import ProjectAssignment
+from timesheet.models import Project, TimeSheetEntry
 from wfh.models import WorkFromHomeRequest
-from documents.models import SalarySlip, PolicyDocument, CompanyDocument
 
 
 def value_from_attrs(attrs, instance, field_name):
@@ -15,7 +19,6 @@ def value_from_attrs(attrs, instance, field_name):
     if instance is not None:
         return getattr(instance, field_name, None)
     return None
-
 
 
 class EmployeeProfileSerializer(serializers.ModelSerializer):
@@ -79,6 +82,163 @@ class EmployeeProfileSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+
+
+class ProjectMemberSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    team_display = serializers.CharField(source="get_team_display", read_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "employee_id", "username", "full_name", "team", "team_display"]
+
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    team_manager = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(is_manager=True).order_by("employee_id", "username"),
+        allow_null=True,
+        required=False,
+    )
+    team_manager_name = serializers.SerializerMethodField()
+    team_manager_employee_id = serializers.CharField(source="team_manager.employee_id", read_only=True)
+    team_manager_team = serializers.CharField(source="team_manager.team", read_only=True)
+    team_manager_team_display = serializers.CharField(source="team_manager.get_team_display", read_only=True)
+    assigned_employees = serializers.SerializerMethodField()
+    assigned_employee_ids = serializers.SerializerMethodField()
+    assignable_employees = serializers.SerializerMethodField()
+    can_assign_members = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "name",
+            "code",
+            "description",
+            "team_manager",
+            "team_manager_name",
+            "team_manager_employee_id",
+            "team_manager_team",
+            "team_manager_team_display",
+            "assigned_employees",
+            "assigned_employee_ids",
+            "assignable_employees",
+            "can_assign_members",
+            "is_active",
+        ]
+
+    def get_team_manager_name(self, obj):
+        if obj.team_manager is None:
+            return ""
+        return obj.team_manager.get_full_name() or obj.team_manager.username
+
+    def get_assigned_employees(self, obj):
+        employees = [assignment.employee for assignment in obj.employee_assignments.select_related("employee")]
+        return ProjectMemberSerializer(employees, many=True).data
+
+    def get_assigned_employee_ids(self, obj):
+        return list(obj.employee_assignments.values_list("employee_id", flat=True))
+
+    def get_assignable_employees(self, obj):
+        request = self.context.get("request")
+        if request is None or not can_assign_project_members(request.user, obj):
+            return []
+
+        employees = get_assignable_team_members(obj, request.user)
+        return ProjectMemberSerializer(employees, many=True).data
+
+    def get_can_assign_members(self, obj):
+        request = self.context.get("request")
+        if request is None:
+            return False
+        return can_assign_project_members(request.user, obj)
+
+    def validate_team_manager(self, value):
+        if value is not None and not value.has_team_scope:
+            raise serializers.ValidationError("Selected user must be a manager with an assigned team.")
+        return value
+
+    def create(self, validated_data):
+        project = super().create(validated_data)
+        self._cleanup_assignments(project)
+        return project
+
+    def update(self, instance, validated_data):
+        project = super().update(instance, validated_data)
+        self._cleanup_assignments(project)
+        return project
+
+    def _cleanup_assignments(self, project):
+        manager = project.team_manager
+        if manager is None or not manager.team:
+            project.employee_assignments.all().delete()
+        else:
+            valid_employee_ids = (
+                User.objects.filter(team=manager.team)
+                .exclude(pk=manager.pk)
+                .values_list("pk", flat=True)
+            )
+            project.employee_assignments.exclude(employee_id__in=valid_employee_ids).delete()
+
+        if hasattr(project, "_prefetched_objects_cache"):
+            project._prefetched_objects_cache = {}
+
+
+class ProjectAssignmentUpdateSerializer(serializers.Serializer):
+    employee_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        allow_empty=True,
+    )
+
+    def validate_employee_ids(self, value):
+        return list(dict.fromkeys(value))
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        project = self.context["project"]
+
+        if not can_assign_project_members(request.user, project):
+            raise serializers.ValidationError({"detail": "You are not allowed to assign employees for this project."})
+
+        if project.team_manager is None or not project.team_manager.team:
+            raise serializers.ValidationError({"detail": "Assign a team manager before assigning employees."})
+
+        allowed_employee_ids = set(get_assignable_team_members(project, request.user).values_list("id", flat=True))
+        invalid_employee_ids = [employee_id for employee_id in attrs["employee_ids"] if employee_id not in allowed_employee_ids]
+        if invalid_employee_ids:
+            raise serializers.ValidationError(
+                {"employee_ids": "You can only assign employees from the team manager's team."}
+            )
+
+        return attrs
+
+    def save(self, **kwargs):
+        project = self.context["project"]
+        request = self.context["request"]
+        employee_ids = self.validated_data["employee_ids"]
+        desired_employee_ids = set(employee_ids)
+        existing_employee_ids = set(project.employee_assignments.values_list("employee_id", flat=True))
+
+        if desired_employee_ids:
+            project.employee_assignments.exclude(employee_id__in=desired_employee_ids).delete()
+        else:
+            project.employee_assignments.all().delete()
+
+        new_assignments = [
+            ProjectAssignment(project=project, employee_id=employee_id, assigned_by=request.user)
+            for employee_id in employee_ids
+            if employee_id not in existing_employee_ids
+        ]
+        if new_assignments:
+            ProjectAssignment.objects.bulk_create(new_assignments)
+
+        if hasattr(project, "_prefetched_objects_cache"):
+            project._prefetched_objects_cache = {}
+
+        return Project.objects.select_related("team_manager").prefetch_related("employee_assignments__employee").get(pk=project.pk)
 
 
 class PortalUserListSerializer(serializers.ModelSerializer):
@@ -192,6 +352,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
 
 class ShortLeaveRequestSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+
     class Meta:
         model = ShortLeaveRequest
         fields = "__all__"
@@ -215,6 +376,20 @@ class TimeSheetEntrySerializer(serializers.ModelSerializer):
         model = TimeSheetEntry
         fields = "__all__"
         read_only_fields = ("user", "status", "remarks", "reviewed_at", "created_at", "updated_at", "project_name")
+
+    def validate_project(self, value):
+        request = self.context.get("request")
+
+        if not value.is_active:
+            raise serializers.ValidationError("Inactive projects cannot be used in the time sheet.")
+
+        if request is None or is_reviewer(request.user):
+            return value
+
+        if not is_user_assigned_to_project(request.user, value):
+            raise serializers.ValidationError("You can only log time against projects assigned to you.")
+
+        return value
 
     def validate(self, attrs):
         hours = value_from_attrs(attrs, self.instance, "hours")
@@ -303,15 +478,14 @@ class SalarySlipSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(detail_url) if request else detail_url
 
 
-
 class PolicyDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = PolicyDocument
         fields = "__all__"
 
 
-
 class CompanyDocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = CompanyDocument
         fields = "__all__"
+

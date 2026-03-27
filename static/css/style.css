@@ -1341,3 +1341,88 @@ body {
     margin-left: 260px; /* This MUST match the exact width of your sidebar! */
     min-height: 100vh;
 }
+
+.project-status-toggle {
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid #dbe3ef;
+    border-radius: 10px;
+    background: white;
+}
+
+.project-cell {
+    min-width: 240px;
+}
+
+.project-cell strong {
+    display: block;
+    color: #1f2a44;
+    margin-bottom: 4px;
+}
+
+.project-cell p,
+.project-manager-meta {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.project-pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.project-pill {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.project-actions-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 280px;
+}
+
+.project-assignment-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.project-multiselect {
+    min-width: 240px;
+    min-height: 120px;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-inactive {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+@media (max-width: 900px) {
+    .project-assignment-form {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .project-actions-col {
+        min-width: 220px;
+    }
+
+    .project-multiselect {
+        min-width: 100%;
+    }
+}

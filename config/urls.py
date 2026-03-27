@@ -28,6 +28,7 @@ urlpatterns = [
     path("", include("profiles.urls")),
     path("", include("leave_management.urls")),
     path("", include("timesheet.urls")),
+    path("", include("projects.urls")),
     path("", include("claims.urls")),
     path("", include("wfh.urls")),
     path("", include("approvals.urls")),

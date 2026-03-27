@@ -27,6 +27,12 @@
                     </a>
                 {% endif %}
 
+                {% if request.user.is_superuser or request.user.is_hr or request.user.has_team_scope %}
+                    <a href="{% url 'project_management' %}" class="{% if request.resolver_match.url_name == 'project_management' %}active{% endif %}">
+                        Projects
+                    </a>
+                {% endif %}
+
                 <a href="{% url 'leave_list' %}" class="{% if request.resolver_match.url_name == 'leave_list' or request.resolver_match.url_name == 'apply_leave' %}active{% endif %}">
                     Leave
                 </a>
@@ -137,3 +143,4 @@
     <script src="{% static 'js/session_actions.js' %}"></script>
 </body>
 </html>
+
