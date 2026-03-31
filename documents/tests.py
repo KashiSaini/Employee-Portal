@@ -1,5 +1,7 @@
 from decimal import Decimal
+from unittest.mock import call, patch
 
+from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
@@ -8,6 +10,7 @@ from timesheet.models import Project, TimeSheetEntry
 
 from .models import EmployeeSalary, PublicHoliday, SalarySlip
 from .services import generate_salary_slip
+from .tasks import generate_salary_slip_email_task
 
 
 class SalarySlipGenerationTests(TestCase):
@@ -102,7 +105,8 @@ class SalaryManagementViewTests(TestCase):
         )
         self.project = Project.objects.create(name="Salary View Project", code="SVP001")
 
-    def test_superadmin_can_save_salary_and_generate_slip(self):
+    @patch("documents.views.generate_salary_slip_email_task.delay")
+    def test_superadmin_can_save_salary_and_queue_slip_email(self, delay_mock):
         self.client.force_login(self.superadmin)
 
         response = self.client.post(
@@ -140,7 +144,42 @@ class SalaryManagementViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("salary_management"))
-        self.assertTrue(SalarySlip.objects.filter(user=self.employee, month=4, year=2026).exists())
+        delay_mock.assert_called_once_with(self.employee.id, 2026, 4)
+        self.assertFalse(SalarySlip.objects.filter(user=self.employee, month=4, year=2026).exists())
+
+    @patch("documents.views.generate_salary_slip_email_task.delay")
+    def test_generate_all_queues_only_employees_with_email(self, delay_mock):
+        self.client.force_login(self.superadmin)
+
+        employee_without_email = User.objects.create_user(
+            username="salary-no-email",
+            email="",
+            password=self.password,
+            employee_id="EMP913",
+        )
+        EmployeeSalary.objects.create(
+            user=self.employee,
+            monthly_salary=Decimal("45000.00"),
+            updated_by=self.superadmin,
+        )
+        EmployeeSalary.objects.create(
+            user=employee_without_email,
+            monthly_salary=Decimal("22000.00"),
+            updated_by=self.superadmin,
+        )
+
+        response = self.client.post(
+            reverse("salary_management"),
+            {
+                "action": "generate_all_salary_slips",
+                "month": 4,
+                "year": 2026,
+                "q": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("salary_management"))
+        self.assertEqual(delay_mock.call_args_list, [call(self.employee.id, 2026, 4)])
 
     def test_hr_cannot_access_salary_management(self):
         self.client.force_login(self.hr_user)
@@ -252,3 +291,69 @@ class SalarySlipListViewTests(TestCase):
         self.assertEqual(response["Content-Type"], "application/pdf")
         self.assertIn("inline;", response["Content-Disposition"])
         self.assertTrue(response.content.startswith(b"%PDF-"))
+
+
+class SalarySlipEmailTaskTests(TestCase):
+    def setUp(self):
+        settings_override = self.settings(
+            MEDIA_ROOT="media",
+            EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+            DEFAULT_FROM_EMAIL="payroll@example.com",
+        )
+        settings_override.enable()
+        self.addCleanup(settings_override.disable)
+
+        self.superadmin = User.objects.create_superuser(
+            username="salary-mail-admin",
+            email="salary-mail-admin@example.com",
+            password="testpass123",
+            employee_id="EMP940",
+        )
+        self.employee = User.objects.create_user(
+            username="salary-mail-employee",
+            email="salary-mail-employee@example.com",
+            password="testpass123",
+            employee_id="EMP941",
+        )
+        self.project = Project.objects.create(name="Salary Mail Project", code="SMP001")
+        EmployeeSalary.objects.create(
+            user=self.employee,
+            monthly_salary=Decimal("30000.00"),
+            updated_by=self.superadmin,
+        )
+
+    def test_task_generates_pdf_file_and_sends_email(self):
+        TimeSheetEntry.objects.create(
+            user=self.employee,
+            project=self.project,
+            work_date="2026-04-01",
+            hours="8.0",
+            description="Approved work entry",
+            status="approved",
+        )
+
+        result = generate_salary_slip_email_task.run(self.employee.id, 2026, 4)
+
+        slip = SalarySlip.objects.get(user=self.employee, month=4, year=2026)
+
+        self.assertEqual(result["status"], "sent")
+        self.assertTrue(slip.file.name.endswith(".pdf"))
+
+        with slip.file.open("rb") as pdf_file:
+            self.assertTrue(pdf_file.read().startswith(b"%PDF-"))
+
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        self.assertEqual(message.to, [self.employee.email])
+        self.assertEqual(message.from_email, "payroll@example.com")
+        self.assertEqual(message.subject, "Salary Slip for April 2026")
+        self.assertEqual(len(message.attachments), 1)
+
+        attachment = message.attachments[0]
+        filename = getattr(attachment, "filename", attachment[0])
+        content = getattr(attachment, "content", attachment[1])
+        mimetype = getattr(attachment, "mimetype", attachment[2])
+
+        self.assertEqual(filename, "salary-slip-EMP941-2026-04.pdf")
+        self.assertEqual(mimetype, "application/pdf")
+        self.assertTrue(content.startswith(b"%PDF-"))

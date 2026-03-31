@@ -2,6 +2,9 @@ import calendar
 from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.mail import EmailMessage
 from django.utils import timezone
 
 from timesheet.models import TimeSheetEntry
@@ -81,6 +84,10 @@ def generate_salary_slip(user, year, month):
     return slip
 
 
+def salary_slip_pdf_filename(slip):
+    return f"salary-slip-{slip.user.employee_id}-{slip.year}-{slip.month:02d}.pdf"
+
+
 def _pdf_escape(value):
     return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
@@ -142,3 +149,46 @@ def build_salary_slip_pdf(slip):
         f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_position}\n%%EOF".encode("ascii")
     )
     return bytes(pdf)
+
+
+def save_salary_slip_pdf(slip):
+    pdf_bytes = build_salary_slip_pdf(slip)
+    file_name = salary_slip_pdf_filename(slip)
+    generated_name = slip.file.field.generate_filename(slip, file_name)
+    storage = slip.file.storage
+
+    if slip.file and slip.file.name and slip.file.name != generated_name:
+        storage.delete(slip.file.name)
+    if storage.exists(generated_name):
+        storage.delete(generated_name)
+
+    slip.file.save(file_name, ContentFile(pdf_bytes), save=True)
+    return pdf_bytes
+
+
+def send_salary_slip_email(slip, pdf_bytes):
+    if not slip.user.email:
+        raise ValueError("Employee email is not set on the profile.")
+
+    month_label = slip.get_month_display()
+    recipient_name = slip.user.get_full_name() or slip.user.username
+    email = EmailMessage(
+        subject=f"Salary Slip for {month_label} {slip.year}",
+        body=(
+            f"Hello {recipient_name},\n\n"
+            f"Please find attached your salary slip for {month_label} {slip.year}.\n\n"
+            "Regards,\n"
+            "Payroll Team"
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[slip.user.email],
+    )
+    email.attach(salary_slip_pdf_filename(slip), pdf_bytes, "application/pdf")
+    email.send(fail_silently=False)
+
+
+def generate_salary_slip_pdf_and_email(user, year, month):
+    slip = generate_salary_slip(user=user, year=year, month=month)
+    pdf_bytes = save_salary_slip_pdf(slip)
+    send_salary_slip_email(slip, pdf_bytes)
+    return slip

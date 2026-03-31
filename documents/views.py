@@ -14,7 +14,8 @@ from accounts.models import User
 
 from .forms import PublicHolidayForm, SalarySlipGenerationForm
 from .models import CompanyDocument, EmployeeSalary, PolicyDocument, PublicHoliday, SalarySlip
-from .services import build_salary_slip_pdf, generate_salary_slip
+from .services import build_salary_slip_pdf, salary_slip_pdf_filename
+from .tasks import generate_salary_slip_email_task
 
 
 def _salary_management_redirect(search_query=""):
@@ -74,9 +75,7 @@ def salary_slip_pdf(request, pk):
     slip = get_object_or_404(_salary_slip_queryset_for_request(request), pk=pk)
     pdf_bytes = build_salary_slip_pdf(slip)
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = (
-        f'inline; filename="salary-slip-{slip.user.employee_id}-{slip.year}-{slip.month:02d}.pdf"'
-    )
+    response["Content-Disposition"] = f'inline; filename="{salary_slip_pdf_filename(slip)}"'
     return response
 
 
@@ -146,25 +145,52 @@ def salary_management(request):
                         messages.error(request, "Choose an employee or use Generate All.")
                         return redirect(_salary_management_redirect(search_query))
 
-                    try:
-                        generate_salary_slip(employee, year, month)
-                    except ValueError as exc:
-                        messages.error(request, str(exc))
-                    else:
+                    if not EmployeeSalary.objects.filter(user=employee).exists():
+                        messages.error(request, "Monthly salary is not set for this employee.")
+                        return redirect(_salary_management_redirect(search_query))
+
+                    if not employee.email:
                         display_name = employee.get_full_name() or employee.username
-                        messages.success(request, f"Generated salary slip for {display_name} for {month_label} {year}.")
+                        messages.error(request, f"{display_name} does not have an email address saved on the profile.")
+                        return redirect(_salary_management_redirect(search_query))
+
+                    generate_salary_slip_email_task.delay(employee.id, year, month)
+                    display_name = employee.get_full_name() or employee.username
+                    messages.success(
+                        request,
+                        f"Queued salary slip generation and email for {display_name} for {month_label} {year}.",
+                    )
                     return redirect(_salary_management_redirect(search_query))
 
                 salary_configs = EmployeeSalary.objects.select_related("user")
-                generated_count = 0
+                queued_count = 0
+                skipped_without_email = 0
                 for salary_config in salary_configs:
-                    generate_salary_slip(salary_config.user, year, month)
-                    generated_count += 1
+                    if not salary_config.user.email:
+                        skipped_without_email += 1
+                        continue
 
-                if generated_count:
-                    messages.success(request, f"Generated {generated_count} salary slip(s) for {month_label} {year}.")
+                    generate_salary_slip_email_task.delay(salary_config.user_id, year, month)
+                    queued_count += 1
+
+                if queued_count:
+                    messages.success(request, f"Queued {queued_count} salary slip email job(s) for {month_label} {year}.")
+                    if skipped_without_email:
+                        messages.warning(
+                            request,
+                            (
+                                f"Skipped {skipped_without_email} employee(s) because no email address "
+                                "is saved on the profile."
+                            ),
+                        )
                 else:
-                    messages.error(request, "No employee salary configurations were found to generate slips.")
+                    if skipped_without_email:
+                        messages.error(
+                            request,
+                            "No salary slip jobs were queued because configured employees do not have email addresses.",
+                        )
+                    else:
+                        messages.error(request, "No employee salary configurations were found to generate slips.")
                 return redirect(_salary_management_redirect(search_query))
 
             messages.error(request, "Enter a valid month, year, and employee selection.")
