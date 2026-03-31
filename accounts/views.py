@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -8,11 +9,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from .access import can_access_user_management, can_assign_user_roles, can_create_users, filter_user_management_queryset
-from .forms import LoginForm, PortalUserCreationForm
+from .forms import LoginForm, PortalUserCreationForm, PasswordResetRequestForm, SetNewPasswordForm
 from .models import User
 
 from django.utils import timezone
 from attendance.models import DailyWorkLog
+from .otp_service import generate_otp, send_otp_sms
 
 
 def login_view(request):
@@ -66,6 +68,87 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
+
+
+def password_reset_request_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard_home")
+
+    if request.method == "POST":
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            phone_number = form.cleaned_data["phone"]
+            # Use filter().first() to avoid errors if a phone number is not unique
+            user = User.objects.filter(phone=phone_number).first()
+
+            if user:
+                otp = generate_otp()
+                
+                # Store OTP and user ID in session for verification
+                # Set an expiry for the OTP, e.g., 5 minutes from now
+                request.session["reset_otp"] = otp
+                request.session["reset_user_id"] = user.id
+                request.session["reset_otp_expiry"] = (timezone.now() + timezone.timedelta(minutes=5)).isoformat()
+
+                # Send OTP via SMS
+                sent, error_detail = send_otp_sms(user.phone, otp)
+                if not sent:
+                    for key in ["reset_otp", "reset_user_id", "reset_otp_expiry"]:
+                        request.session.pop(key, None)
+
+                    if settings.DEBUG and error_detail:
+                        messages.error(request, f"Failed to send OTP: {error_detail}")
+                    else:
+                        messages.error(request, "Failed to send OTP. Please try again later or contact support.")
+                    return render(request, "accounts/password_reset_request.html", {"form": form})
+
+            # Don't reveal if a user exists. Always show a success-like message.
+            messages.info(request, "If an account with this phone number exists, an OTP has been sent.")
+            return redirect("password_reset_confirm")
+    else:
+        form = PasswordResetRequestForm()
+
+    return render(request, "accounts/password_reset_request.html", {"form": form})
+
+
+def password_reset_confirm_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard_home")
+
+    user_id = request.session.get("reset_user_id")
+    otp_expiry_str = request.session.get("reset_otp_expiry")
+
+    if not user_id or not otp_expiry_str:
+        messages.info(request, "Request a new OTP to continue the password reset process.")
+        return redirect("password_reset_request")
+    
+    otp_expiry = timezone.datetime.fromisoformat(otp_expiry_str)
+    if timezone.now() > otp_expiry:
+        messages.error(request, "OTP has expired. Please request a new one.")
+        # Clear session
+        for key in ["reset_otp", "reset_user_id", "reset_otp_expiry"]:
+            request.session.pop(key, None)
+        return redirect("password_reset_request")
+
+    if request.method == "POST":
+        form = SetNewPasswordForm(request.POST)
+        if form.is_valid():
+            if form.cleaned_data["otp"] == request.session.get("reset_otp"):
+                user = User.objects.get(id=user_id)
+                user.set_password(form.cleaned_data["password"])
+                user.save()
+
+                for key in ["reset_otp", "reset_user_id", "reset_otp_expiry"]:
+                    request.session.pop(key, None)
+
+                messages.success(request, "Your password has been reset successfully. Please log in.")
+                return redirect("login")
+            else:
+                messages.error(request, "Invalid OTP. Please try again.")
+    else:
+        form = SetNewPasswordForm()
+
+    return render(request, "accounts/password_reset_confirm.html", {"form": form})
 
 
 def _user_management_redirect(search_query=""):

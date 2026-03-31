@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 from .models import User
 
@@ -19,6 +21,80 @@ class LoginForm(forms.Form):
             ("home", "Work From Home"),
         ]
     )
+
+
+class PasswordResetRequestForm(forms.Form):
+    phone = forms.CharField(
+        max_length=15,
+        label="Phone number",
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Registered phone number",
+                "autocomplete": "tel",
+                "inputmode": "tel",
+                "autofocus": True,
+            }
+        ),
+    )
+
+    def clean_phone(self):
+        return self.cleaned_data["phone"].strip()
+
+
+class SetNewPasswordForm(forms.Form):
+    otp = forms.CharField(
+        min_length=6,
+        max_length=6,
+        label="OTP",
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "6-digit OTP",
+                "inputmode": "numeric",
+                "autocomplete": "one-time-code",
+                "autofocus": True,
+            }
+        ),
+    )
+    password = forms.CharField(
+        label="New password",
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "New password",
+                "autocomplete": "new-password",
+            }
+        ),
+    )
+    confirm_password = forms.CharField(
+        label="Confirm password",
+        widget=forms.PasswordInput(
+            attrs={
+                "placeholder": "Confirm new password",
+                "autocomplete": "new-password",
+            }
+        ),
+    )
+
+    def clean_otp(self):
+        otp = self.cleaned_data["otp"].strip()
+        if not otp.isdigit():
+            raise forms.ValidationError("OTP must contain only digits.")
+        return otp
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if password:
+            try:
+                validate_password(password)
+            except ValidationError as exc:
+                self.add_error("password", exc)
+
+        if password and confirm_password and password != confirm_password:
+            self.add_error("confirm_password", "Passwords do not match.")
+
+        return cleaned_data
 
 
 class PortalUserCreationForm(UserCreationForm):

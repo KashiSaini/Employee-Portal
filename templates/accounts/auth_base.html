@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Account Access{% endblock title %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}?v=20260331-1">
+</head>
+<body class="auth-shell-body">
+    <div class="auth-shell">
+        <div class="auth-shell__glow auth-shell__glow--top"></div>
+        <div class="auth-shell__glow auth-shell__glow--bottom"></div>
+
+        <div class="auth-shell__grid">
+            <section class="auth-hero">
+                <a href="{% url 'login' %}" class="auth-brand">
+                    <span class="auth-brand__mark">B</span>
+                    <span>
+                        <strong>MyBlueThink</strong>
+                        <small>Employee Portal</small>
+                    </span>
+                </a>
+
+                <span class="auth-eyebrow">{% block auth_eyebrow %}Account Recovery{% endblock auth_eyebrow %}</span>
+                <h1>{% block auth_heading %}Reset access securely{% endblock auth_heading %}</h1>
+                <p class="auth-hero__text">{% block auth_description %}{% endblock auth_description %}</p>
+
+                <div class="auth-hero__panel">
+                    <h2>Private recovery flow</h2>
+                    <p>
+                        We only use your registered phone number to issue a one-time code and help you get back into
+                        your account safely.
+                    </p>
+                </div>
+            </section>
+
+            <main class="auth-card">
+                {% if messages %}
+                    <div class="auth-messages">
+                        {% for message in messages %}
+                            <div class="message-box message-box--{{ message.tags|default:'info' }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block auth_card %}{% endblock auth_card %}
+            </main>
+        </div>
+    </div>
+</body>
+</html>
